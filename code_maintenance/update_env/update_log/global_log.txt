@@ -1,0 +1,56 @@
+2025-06-02 18:35:27 [INFO] 
+[ Checking prerequisites ]
+2025-06-02 18:35:27 [INFO] Node.js is installed.
+2025-06-02 18:35:27 [INFO] npm is installed.
+2025-06-02 18:35:31 [INFO] npm global prefix is writable; no sudo needed.
+2025-06-02 18:35:31 [INFO] 
+[ Upgrading npm to latest ]
+2025-06-02 18:35:34 [INFO] npm upgraded to 11.4.1
+2025-06-02 18:35:34 [INFO] 
+[ Installing/upgrading curated global CLI tools ]
+2025-06-02 18:35:34 [INFO] Installing/upgrading typescript@latest ...
+2025-06-02 18:35:34 [INFO] typescript installed/upgraded.
+2025-06-02 18:35:34 [INFO] Installing/upgrading eslint@latest ...
+2025-06-02 18:35:37 [INFO] eslint installed/upgraded.
+2025-06-02 18:35:37 [INFO] Installing/upgrading hardhat@latest ...
+2025-06-02 18:35:49 [INFO] hardhat installed/upgraded.
+2025-06-02 18:35:49 [INFO] Installing/upgrading npm-check-updates@latest ...
+2025-06-02 18:35:50 [INFO] npm-check-updates installed/upgraded.
+2025-06-02 18:35:50 [INFO] 
+[ Installing npm’s deprecated helpers ]
+2025-06-02 18:35:50 [INFO] Installing glob@latest ...
+2025-06-02 18:35:52 [INFO] glob installed.
+2025-06-02 18:35:52 [INFO] Installing lru-cache@latest ...
+2025-06-02 18:35:53 [INFO] lru-cache installed.
+2025-06-02 18:35:53 [INFO] 
+[ Checking for outdated global packages ]
+2025-06-02 18:35:54 [INFO] No other outdated global packages.
+2025-06-02 18:35:54 [INFO] 
+[ Verifying installed versions ]
+2025-06-02 18:35:54 [INFO] node: v22.16.0
+2025-06-02 18:35:54 [INFO] npm : 11.4.1
+2025-06-02 18:35:54 [INFO] 
+Curated tools:
+2025-06-02 18:35:54 [INFO] typescript           Version 5.8.3
+2025-06-02 18:35:55 [INFO] eslint               v9.28.0
+2025-06-02 18:35:55 [INFO] hardhat              2.24.1
+2025-06-02 18:35:55 [INFO] npm-check-updates    18.0.1
+2025-06-02 18:35:55 [INFO] 
+Deprecated helpers:
+2025-06-02 18:35:55 [INFO] glob                 not found / N/A
+2025-06-02 18:35:55 [INFO] lru-cache            not found / N/A
+2025-06-02 18:35:55 [INFO] 
+[ Global npm packages (depth=0) ]
+2025-06-02 18:35:56 [INFO] /home/peppasmich/.nvm/versions/node/v22.16.0/lib
+├── corepack@0.33.0
+├── eslint@9.28.0
+├── glob@11.0.2
+├── hardhat@2.24.1
+├── lru-cache@11.1.0
+├── npm-check-updates@18.0.1
+├── npm@11.4.1
+└── typescript@5.8.3
+2025-06-02 18:35:56 [INFO] Finished listing all global packages.
+2025-06-02 18:35:56 [INFO] 
+[ Global npm environment setup complete ]
+

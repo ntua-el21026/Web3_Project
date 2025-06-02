@@ -1,0 +1,38 @@
+2025-06-02 18:36:48 [INFO] Project root detected: /home/peppasmich/Web3_Project
+2025-06-02 18:36:48 [INFO] All prerequisites found: curl, git, jq, npm.
+2025-06-02 18:36:48 [INFO] Installing or updating NVM...
+2025-06-02 18:36:49 [INFO] NVM directory exists. Fetching and checking out v0.40.3 …
+2025-06-02 18:36:50 [INFO] NVM source already present in /home/peppasmich/.profile
+2025-06-02 18:36:50 [INFO] NVM installation/update complete.
+2025-06-02 18:36:50 [INFO] Ensuring latest LTS Node.js via NVM…
+2025-06-02 18:36:51 [INFO] Latest LTS version detected: [0;32m->
+2025-06-02 18:36:51 [INFO] Installing Node.js [0;32m-> (latest LTS)…
+2025-06-02 18:36:54 [INFO] Node.js LTS setup complete.
+2025-06-02 18:36:54 [INFO] Upgrading npm to the latest version…
+2025-06-02 18:36:57 [INFO] npm successfully upgraded to 11.4.1
+2025-06-02 18:36:57 [INFO] Checking for outdated global npm packages…
+2025-06-02 18:36:58 [INFO] All global npm packages are up to date.
+2025-06-02 18:36:58 [INFO] Installed versions and global packages summary:
+2025-06-02 18:36:59 [INFO]   0.40.3
+2025-06-02 18:36:59 [INFO]   v22.16.0
+2025-06-02 18:36:59 [INFO]   11.4.1
+2025-06-02 18:37:00 [INFO]   /home/peppasmich/.nvm/versions/node/v22.16.0/lib
+2025-06-02 18:37:00 [INFO]   ├── corepack@0.33.0
+2025-06-02 18:37:00 [INFO]   ├── eslint@9.28.0
+2025-06-02 18:37:00 [INFO]   ├── glob@11.0.2
+2025-06-02 18:37:00 [INFO]   ├── hardhat@2.24.1
+2025-06-02 18:37:00 [INFO]   ├── lru-cache@11.1.0
+2025-06-02 18:37:00 [INFO]   ├── npm-check-updates@18.0.1
+2025-06-02 18:37:00 [INFO]   ├── npm@11.4.1
+2025-06-02 18:37:00 [INFO]   └── typescript@5.8.3
+2025-06-02 18:37:00 [INFO] Upgrading direct dependencies/devDependencies in package.json…
+2025-06-02 18:37:49 [INFO] gauge                          override → 5.0.2
+2025-06-02 18:38:05 [INFO] react                          candidate → 19.1.0
+2025-06-02 18:38:08 [INFO] rimraf                         override → 6.0.1
+2025-06-02 18:38:19 [INFO] react/react-dom mismatch → aligning both to ^18.3.1
+2025-06-02 18:38:19 [INFO] package.json updated with bumped dependencies.
+2025-06-02 18:38:19 [INFO] Installing updated dependencies…
+2025-06-02 18:40:39 [INFO] Dependency bump step complete.
+2025-06-02 18:40:39 [INFO] Running final npm audit (omit dev dependencies)…
+2025-06-02 18:40:41 [INFO] All steps completed successfully.
+
