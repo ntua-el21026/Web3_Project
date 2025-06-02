@@ -1,0 +1,87 @@
+[
+  {
+    "type": "directory",
+    "name": ".",
+    "contents": [
+      {
+        "type": "file",
+        "name": ".gitignore"
+      },
+      {
+        "type": "file",
+        "name": "LICENSE"
+      },
+      {
+        "type": "file",
+        "name": "README.md"
+      },
+      {
+        "type": "directory",
+        "name": "code_maintenance",
+        "contents": [
+          {
+            "type": "directory",
+            "name": "code_utils",
+            "contents": [
+              {
+                "type": "file",
+                "name": "fix_eof.py"
+              },
+              {
+                "type": "file",
+                "name": "generate_docs.py"
+              },
+              {
+                "type": "file",
+                "name": "lint_and_format.py"
+              },
+              {
+                "type": "file",
+                "name": "project_struct.py"
+              },
+              {
+                "type": "directory",
+                "name": "struct_report"
+              }
+            ]
+          },
+          {
+            "type": "directory",
+            "name": "update_env",
+            "contents": [
+              {
+                "type": "file",
+                "name": "update_all.sh"
+              },
+              {
+                "type": "file",
+                "name": "update_global.sh"
+              },
+              {
+                "type": "file",
+                "name": "update_node.sh"
+              },
+              {
+                "type": "file",
+                "name": "update_node_modules.sh"
+              },
+              {
+                "type": "file",
+                "name": "update_python.sh"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "file",
+        "name": "package.json"
+      }
+    ]
+  },
+  {
+    "type": "report",
+    "directories": 4,
+    "files": 13
+  }
+]
