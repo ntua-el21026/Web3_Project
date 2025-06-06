@@ -4,30 +4,59 @@ update_global.py
 
 Installs, upgrades, and verifies curated global npm packages.
 Includes enhanced checks, reporting, and error handling.
-Logs everything to both stdout and `update_log/global_log.txt` (next to this script).
+Logs everything to both stdout and the shared log at:
+    <project_root>/cache/code_maintenance/update_env/logs/global_log.log
+
 Assumes Node.js and npm are already installed (or accessible).
 """
 
-import os
 import sys
 import subprocess
 import shutil
 import logging
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Determine "update_log" folder relative to this script's own directory
+# Helper to find project root (the directory containing .gitignore)
 # ──────────────────────────────────────────────────────────────────────────────
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-LOG_DIR = os.path.join(SCRIPT_DIR, "update_log")
-LOG_FILE = "global_log.txt"
-os.makedirs(LOG_DIR, exist_ok=True)
+
+
+def find_project_root(start: Path) -> Optional[Path]:
+    current = start.resolve()
+    while True:
+        if (current / ".gitignore").is_file():
+            return current
+        if current == current.parent:
+            return None
+        current = current.parent
+
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Set up logging
+# Determine shared log folder under:
+#     <project_root>/cache/code_maintenance/update_env/logs/
+# ──────────────────────────────────────────────────────────────────────────────
+SCRIPT_DIR = Path(__file__).parent.resolve()
+proj = find_project_root(SCRIPT_DIR)
+if not proj:
+    print("[ERROR] .gitignore not found; cannot locate project root.")
+    sys.exit(1)
+
+LOG_DIR_UPDATE = proj / "cache" / "code_maintenance" / "update_env" / "logs"
+LOG_DIR_UPDATE.mkdir(parents=True, exist_ok=True)
+
+LOG_FILE = "global_log.log"
+UPDATE_LOG_PATH = LOG_DIR_UPDATE / LOG_FILE
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Set up logging (console + shared log file)
 # ──────────────────────────────────────────────────────────────────────────────
 logger = logging.getLogger("update_global")
 logger.setLevel(logging.INFO)
+
+# (1) If the log file already exists, truncate it explicitly
+if UPDATE_LOG_PATH.exists():
+    UPDATE_LOG_PATH.write_text("", encoding="utf-8")
 
 # Console handler (stdout) with minimal formatting
 ch = logging.StreamHandler(sys.stdout)
@@ -36,14 +65,14 @@ ch_formatter = logging.Formatter("%(message)s")
 ch.setFormatter(ch_formatter)
 logger.addHandler(ch)
 
-# File handler (append mode) with timestamps
-fh = logging.FileHandler(os.path.join(LOG_DIR, LOG_FILE), mode="a", encoding="utf-8")
-fh.setLevel(logging.INFO)
-fh_formatter = logging.Formatter(
+# (2) File handler opens in write mode ("w") to overwrite any existing content
+fh_update = logging.FileHandler(UPDATE_LOG_PATH, mode="w", encoding="utf-8")
+fh_update.setLevel(logging.INFO)
+fh_update_formatter = logging.Formatter(
     "%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S"
 )
-fh.setFormatter(fh_formatter)
-logger.addHandler(fh)
+fh_update.setFormatter(fh_update_formatter)
+logger.addHandler(fh_update)
 
 
 def section(title: str) -> None:
@@ -142,8 +171,6 @@ def run_simple(
             return ""
     except FileNotFoundError:
         error_exit(f"Command not found: {' '.join(cmd)}")
-    # This return is never reached because error_exit() exits, but satisfies
-    # type checkers:
     return ""  # type: ignore[unreachable]
 
 
@@ -185,9 +212,8 @@ def main() -> None:
     # ─────────────────────────────────────────────────────────────
     # 4. Define curated global CLI tools to install/upgrade
     # ─────────────────────────────────────────────────────────────
-    curated_tools = ["typescript", "eslint", "hardhat", "npm-check-updates"]
+    curated_tools: List[str] = ["typescript", "eslint", "hardhat", "npm-check-updates"]
 
-    # Show progress bar while installing/upgrading curated tools
     section("Installing/upgrading curated global CLI tools")
     total_curated = len(curated_tools)
     bar_length = 40
@@ -195,10 +221,9 @@ def main() -> None:
         percent = (idx + 1) / total_curated
         filled = int(bar_length * percent)
         bar = "#" * filled + " " * (bar_length - filled)
+        # Terminal-only progress update:
         print(
-            f"\rProcessing tools: [{bar}] {
-                percent *
-                100:5.1f}%  ",
+            f"\rProcessing tools: [{bar}] {percent * 100:5.1f}%  ",
             end="",
             flush=True,
         )
@@ -217,17 +242,16 @@ def main() -> None:
     # ─────────────────────────────────────────────────────────────
     # 5. Resolve deprecated npm helpers (glob, lru-cache)
     # ─────────────────────────────────────────────────────────────
-    deprecated_helpers = ["glob", "lru-cache"]
+    deprecated_helpers: List[str] = ["glob", "lru-cache"]
     section("Installing npm’s deprecated helpers")
     total_deprecated = len(deprecated_helpers)
     for idx, helper in enumerate(deprecated_helpers):
         percent = (idx + 1) / total_deprecated
         filled = int(bar_length * percent)
         bar = "#" * filled + " " * (bar_length - filled)
+        # Terminal-only progress update:
         print(
-            f"\rProcessing helpers: [{bar}] {
-                percent *
-                100:5.1f}%  ",
+            f"\rProcessing helpers: [{bar}] {percent * 100:5.1f}%  ",
             end="",
             flush=True,
         )
@@ -284,10 +308,9 @@ def main() -> None:
     npm_version = run_simple(
         ["npm", "-v"], "Failed to retrieve npm version.", capture_output=True
     )
-    logger.info(f"node: {node_version}")
-    logger.info(f"npm : {npm_version}")
+    logger.info(f"node:   {node_version}")
+    logger.info(f"npm :   {npm_version}")
 
-    # Show progress bar while verifying each tool
     total_verify = len(curated_tools) + len(deprecated_helpers)
     count = 0
     for tool in curated_tools + deprecated_helpers:
@@ -295,6 +318,7 @@ def main() -> None:
         percent = count / total_verify
         filled = int(bar_length * percent)
         bar = "#" * filled + " " * (bar_length - filled)
+        # Terminal-only progress update:
         print(f"\rVerifying tools: [{bar}] {percent * 100:5.1f}%  ", end="", flush=True)
         verify_tool(tool)
     print(f"\rVerifying tools: [{'#' * bar_length}] 100.0%")

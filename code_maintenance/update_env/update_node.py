@@ -2,649 +2,396 @@
 """
 update_node.py
 
-Full Maintenance Script:
+Automates Node.js project maintenance with peer-dependency reconciliation.
 
-1. Locate project root by finding package.json (walking up from current directory).
-2. Verify prerequisites: curl, git, jq, npm.
-3. Install or update NVM to the latest tagged release.
-4. Ensure shell profile sources NVM (modify ~/.bashrc, ~/.zshrc, or ~/.profile as needed).
-5. Load NVM and install/use the latest LTS Node.js version.
-6. Upgrade npm itself to the latest version.
-7. Upgrade global npm packages (if any are outdated).
-8. Print installed versions and global-package summary.
-9. Upgrade direct dependencies/devDependencies in package.json:
-        - Respect "overrides": force-bump those packages.
-        - For others, bump if latest satisfies peerDependencies.
-        - Auto-align react & react-dom minor/major versions.
-        - Write changes and run `npm install --legacy-peer-deps` (fallback to `--force`), then `npm dedupe`.
-10. Run `npm audit --omit=dev` and warn if vulnerabilities remain.
+• Ensures latest NVM / LTS Node / npm.
+• Optionally upgrades global npm packages.
+• For every root dependency:
+                                                                                                                                                                                                                                                                1. Gather peer-dependency ranges (`npm ls --depth=1`).
+                                                                                                                                                                                                                                                                2. Pick the newest published version that satisfies root + peers;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                if impossible, pick newest version satisfying peers only.
+                                                                                                                                                                                                                                                                3. Log a candidate line:
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                CANDIDATE → <pkg> <old> -> ^<new>  [UPGRADE|DOWNGRADE peer-deps|SAME|CONFLICT]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                — These lines go into the shared log file (not to the console).
+                                                                                                                                                                                                                                                                4. Only UPGRADE / DOWNGRADE changes modify package.json.
+• Writes package.json, runs `npm install`, dedupes, audits.
 
-All output is logged to:
-<script_directory>/update_log/node_log.txt
+All INFO‐level logs (including candidate lines) now merge into:
+                                                                                                                                <project_root>/cache/code_maintenance/update_env/logs/node_log.log
 
-Logging:
-- INFO: progress and summaries
-- WARNING: non-fatal issues
-- ERROR: fatal issues and exit
+Console only shows WARNING+ and the progress bar.
 
-Usage:
-Simply run this script from anywhere. It will locate package.json, cd to that directory,
-then perform all maintenance steps.
-
-Requirements:
-- Python 3.7+
-- Virtual environment is optional
-- “bash” shell available
 """
 
-import sys
-import subprocess
-import logging
-import shutil
+from __future__ import annotations
+
 import json
-import os
+import logging
+import re
+import shutil
+import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, List, Optional, Sequence, Tuple
+
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Configure Logging (stdout + file)
+# Helpers to locate project root
+# ────────────────────────────────────────────────────────────────────────────────
+def find_project_root(start: Path) -> Optional[Path]:
+    current = start.resolve()
+    while True:
+        if (current / ".gitignore").is_file():
+            return current
+        if current == current.parent:
+            return None
+        current = current.parent
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Determine shared “logs” folder under:
+#     <project_root>/cache/code_maintenance/update_env/logs/
 # ────────────────────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).parent.resolve()
-LOG_DIR = SCRIPT_DIR / "update_log"
-LOG_PATH = LOG_DIR / "node_log.txt"
+proj = find_project_root(SCRIPT_DIR)
+if not proj:
+    print("[ERROR] .gitignore not found; cannot locate project root.")
+    sys.exit(1)
 
-# ensure update_log exists
-LOG_DIR.mkdir(exist_ok=True)
+LOG_DIR = proj / "cache" / "code_maintenance" / "update_env" / "logs"
+LOG_PATH = LOG_DIR / "node_log.log"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+# Clear previous contents
+LOG_PATH.write_text("")
 
-logging.basicConfig(
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(LOG_PATH, encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
+# ────────────────────────────────────────────────────────────────────────────────
+# Configure Logging: all INFO+ to shared log file, WARNING+ to console
+# ────────────────────────────────────────────────────────────────────────────────
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+file_h = logging.FileHandler(LOG_PATH, encoding="utf-8")
+file_h.setLevel(logging.INFO)
+file_h.setFormatter(
+    logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", "%Y-%m-%d %H:%M:%S")
 )
+logger.addHandler(file_h)
 
-# Total number of high-level steps
+console_h = logging.StreamHandler(sys.stdout)
+console_h.setLevel(logging.WARNING)
+console_h.setFormatter(logging.Formatter("%(message)s"))
+logger.addHandler(console_h)
+
 TOTAL_STEPS = 10
-BAR_LENGTH = 40
+BAR_LEN = 40
 
-
-def print_global_progress(step: int, description: str) -> None:
-    """
-    Print a simple global progress bar with `TOTAL_STEPS` segments.
-    `step` is 1-based index of the current step.
-    """
-    filled = int((step / TOTAL_STEPS) * BAR_LENGTH)
-    bar = "#" * filled + " " * (BAR_LENGTH - filled)
-    # \r to overwrite the same line, flush so it appears immediately.
-    print(
-        f"\rOverall Progress: [{bar}] Step {step}/{TOTAL_STEPS} - {description}",
-        end="",
-        flush=True,
+# ────────────────────────────────────────────────────────────────────────────────
+# Packaging helpers
+# ────────────────────────────────────────────────────────────────────────────────
+try:
+    from packaging import version as P  # type: ignore
+    from packaging.version import InvalidVersion
+except ImportError:
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--quiet", "packaging"], check=True
     )
-    # After printing, move to next line for detailed logs
-    print()
+    from packaging import version as P  # type: ignore
+    from packaging.version import InvalidVersion
 
 
-def run_cmd(
-    cmd: List[str],
+def try_parse(v: str) -> Optional[P.Version]:
+    try:
+        return P.parse(v)
+    except InvalidVersion:
+        return None
+
+
+def safe_gt(a: str, b: str) -> bool:
+    va, vb = try_parse(a), try_parse(b)
+    return bool(va and vb and va > vb)
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Progress bar helper
+# ────────────────────────────────────────────────────────────────────────────────
+def bar(step: int, label: str) -> None:
+    pct = step / TOTAL_STEPS
+    sys.stdout.write(
+        f"\r[{'#' * int(pct * BAR_LEN):<{BAR_LEN}}] {step}/{TOTAL_STEPS} {label:<25}"
+    )
+    sys.stdout.flush()
+    if step == TOTAL_STEPS:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Shell helper
+# ────────────────────────────────────────────────────────────────────────────────
+def run(
+    cmd: Sequence[str],
     *,
     cwd: Optional[Path] = None,
-    capture_output: bool = False,
-    check: bool = False,
-    use_bash_login: bool = False,
+    capture: bool = False,
+    bash: bool = False,
+    timeout: int = 120,
 ) -> Tuple[int, str, str]:
-    """
-    Run a subprocess command.
-    - If use_bash_login=True, wrap command as: bash -lc "<cmd...>"
-            so that NVM (sourced in .bashrc/.zshrc) is available.
-    - capture_output: capture stdout and stderr, return as strings.
-    - check: if True, CalledProcessError is raised on non-zero exit.
-    Returns (returncode, stdout_str, stderr_str).
-    """
-    if use_bash_login:
-        inner = " ".join(cmd)
-        full_cmd = ["bash", "-lc", inner]
-    else:
-        full_cmd = cmd
-
+    full = ["bash", "-lc", " ".join(cmd)] if bash else list(cmd)
     try:
-        if capture_output:
-            result = subprocess.run(
-                full_cmd,
-                cwd=str(cwd) if cwd else None,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=check,
-            )
-            return (result.returncode, result.stdout.strip(), result.stderr.strip())
-        else:
-            result = subprocess.run(
-                full_cmd, cwd=str(cwd) if cwd else None, check=check
-            )
-            return (result.returncode, "", "")
-    except subprocess.CalledProcessError as e:
-        stdout = e.stdout.strip() if isinstance(e.stdout, str) else ""
-        stderr = e.stderr.strip() if isinstance(e.stderr, str) else ""
-        return (e.returncode, stdout, stderr)
+        res = subprocess.run(
+            full,
+            cwd=str(cwd) if cwd else None,
+            text=True,
+            stdout=subprocess.PIPE if capture else subprocess.DEVNULL,
+            stderr=subprocess.PIPE if capture else subprocess.DEVNULL,
+            timeout=timeout,
+        )
+        return res.returncode, (res.stdout or "").strip(), (res.stderr or "").strip()
+    except subprocess.TimeoutExpired:
+        return 124, "", "TimeoutExpired"
     except FileNotFoundError:
-        logging.error(f"Command not found: {full_cmd[0]}")
+        return 127, "", "CommandNotFound"
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Misc helpers
+# ────────────────────────────────────────────────────────────────────────────────
+def need(*tools: str) -> None:
+    missing = [t for t in tools if shutil.which(t) is None]
+    if missing:
+        logger.error("Missing: " + ", ".join(missing))
         sys.exit(1)
 
 
-def detect_shell_profile() -> Path:
-    """
-    Detect which shell profile file to update:
-    - If ZSH and ~/.zshrc exists, use that
-    - Else if BASH and ~/.bashrc exists, use that
-    - Else if ~/.profile exists, use that
-    Raises RuntimeError if none found.
-    """
-    home = Path.home()
-    if "ZSH_VERSION" in os.environ and (home / ".zshrc").is_file():
-        return home / ".zshrc"
-    if "BASH_VERSION" in os.environ and (home / ".bashrc").is_file():
-        return home / ".bashrc"
-    if (home / ".profile").is_file():
-        return home / ".profile"
-    raise RuntimeError(
-        "Could not detect a shell profile (e.g., .bashrc, .zshrc, or .profile)."
-    )
-
-
-def find_project_root() -> Path:
-    """
-    Walk up from current working directory until a directory containing package.json is found.
-    Returns that directory Path. Exits on failure.
-    """
-    dir_path = Path.cwd()
-    while dir_path != dir_path.parent:
-        if (dir_path / "package.json").is_file():
-            return dir_path
-        dir_path = dir_path.parent
-    logging.error("package.json not found; cannot locate project root.")
+def root_dir() -> Path:
+    cur = Path.cwd()
+    while cur != cur.parent:
+        if (cur / "package.json").is_file():
+            return cur
+        cur = cur.parent
+    logger.error("package.json not found")
     sys.exit(1)
 
 
-def verify_prerequisites() -> None:
-    """
-    Ensure required commands (curl, git, jq, npm) are available. Exit on missing.
-    """
-    required = ["curl", "git", "jq", "npm"]
-    missing = []
-    for exe in required:
-        if shutil.which(exe) is None:
-            missing.append(exe)
-    if missing:
-        logging.error(f"Missing prerequisites: {', '.join(missing)}")
-        sys.exit(1)
-    logging.info("All prerequisites found: curl, git, jq, npm.")
+# ────────────────────────────────────────────────────────────────────────────────
+# Semver CLI helper
+# ────────────────────────────────────────────────────────────────────────────────
+def ensure_semver() -> bool:
+    if shutil.which("semver"):
+        return True
+    run(["npm", "install", "-g", "semver"], capture=True)
+    return shutil.which("semver") is not None
 
 
-def install_or_update_nvm(step: int) -> None:
-    """
-    Step 3: Install or update NVM to the latest tagged release under ~/.nvm.
-    Update shell profile to source NVM if needed.
-    """
-    print_global_progress(step, "Install/update NVM")
-    logging.info("Installing or updating NVM...")
+SEMVER_OK = ensure_semver()
+
+
+def semver_ok(range_: str, vers: str) -> bool:
+    if SEMVER_OK:
+        return run(["semver", "-r", range_, vers], capture=True)[0] == 0
+    return run(["npx", "-y", "semver", "-r", range_, vers], capture=True)[0] == 0
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Version selection
+# ────────────────────────────────────────────────────────────────────────────────
+def highest_satisfying(all_versions: List[str], ranges: List[str]) -> Optional[str]:
+    pool = [v for v in all_versions if (p := try_parse(v)) and not p.is_prerelease]
+    for v in sorted(pool, key=P.parse, reverse=True):
+        if all(semver_ok(r, v) for r in ranges):
+            return v
+    return None
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# NVM / Node / npm setup
+# ────────────────────────────────────────────────────────────────────────────────
+def ensure_nvm(step: int) -> None:
+    bar(step, "NVM")
     home = Path.home()
+    repo = "https://github.com/nvm-sh/nvm.git"
     nvm_dir = home / ".nvm"
-    nvm_git_url = "https://github.com/nvm-sh/nvm.git"
-
-    # 1. Fetch latest tag
-    code, out, err = run_cmd(
+    rc, tags, _ = run(
         [
             "git",
             "-c",
             "versionsort.suffix=-",
             "ls-remote",
-            "--exit-code",
             "--refs",
             "--sort=version:refname",
             "--tags",
-            nvm_git_url,
+            repo,
             "*.*.*",
         ],
-        capture_output=True,
+        capture=True,
     )
-    if code != 0 or not out:
-        logging.error("Failed to detect latest NVM tag from GitHub.")
+    if rc or not tags:
+        logger.error("Cannot fetch NVM tags")
         sys.exit(1)
-
-    latest_tag = out.splitlines()[-1].split("/")[-1]
-    if not latest_tag:
-        logging.error("Parsed empty NVM tag.")
-        sys.exit(1)
-
+    latest = tags.splitlines()[-1].split("/")[-1]
     if not nvm_dir.is_dir():
-        logging.info(f"NVM not found. Cloning {latest_tag} into {nvm_dir} …")
-        code, _, err = run_cmd(
-            [
-                "git",
-                "clone",
-                "--depth",
-                "1",
-                "--branch",
-                latest_tag,
-                nvm_git_url,
-                str(nvm_dir),
-            ]
-        )
-        if code != 0:
-            logging.error(f"git clone failed: {err}")
-            sys.exit(1)
+        run(["git", "clone", "--depth", "1", "--branch", latest, repo, str(nvm_dir)])
     else:
-        logging.info(f"NVM directory exists. Fetching and checking out {latest_tag} …")
-        code, _, err = run_cmd(
-            ["git", "fetch", "--depth", "1", "origin", latest_tag], cwd=nvm_dir
-        )
-        if code != 0:
-            logging.error(f"git fetch failed in {nvm_dir}: {err}")
-            sys.exit(1)
-        code, _, err = run_cmd(["git", "checkout", latest_tag], cwd=nvm_dir)
-        if code != 0:
-            logging.error(f"git checkout {latest_tag} failed: {err}")
-            sys.exit(1)
+        run(["git", "fetch", "--depth", "1", "origin", latest], cwd=nvm_dir)
+        run(["git", "checkout", latest], cwd=nvm_dir)
+    logger.info(f"NVM ready ({latest})")
 
-    # 2. Ensure shell profile sources NVM
-    try:
-        profile = detect_shell_profile()
-    except RuntimeError as e:
-        logging.error(str(e))
+
+def ensure_lts(step: int) -> None:
+    bar(step, "Node LTS")
+    rc, out, _ = run(["nvm", "ls-remote", "--lts"], capture=True, bash=True)
+    if rc:
+        logger.error("nvm ls-remote failed")
         sys.exit(1)
-
-    source_line = (
-        f"\n# === Load NVM ===\n"
-        f'export NVM_DIR="{nvm_dir}"\n'
-        f'[ -s "{nvm_dir}/nvm.sh" ] && . "{nvm_dir}/nvm.sh"  # This loads nvm\n'
-    )
-
-    profile_text = profile.read_text(encoding="utf-8", errors="ignore")
-    if "NVM_DIR" not in profile_text:
-        logging.info(f"Adding NVM source to {profile}")
-        try:
-            with profile.open("a", encoding="utf-8") as f:
-                f.write(source_line)
-        except Exception as e:
-            logging.error(f"Failed to append to {profile}: {e}")
-            sys.exit(1)
-    else:
-        logging.info(f"NVM source already present in {profile}")
-
-    logging.info("NVM installation/update complete.")
-
-
-def ensure_latest_lts_node(step: int) -> None:
-    """
-    Step 5: Using NVM, install or use the latest LTS Node.js version.
-    """
-    print_global_progress(step, "Ensure latest LTS Node.js")
-    logging.info("Ensuring latest LTS Node.js via NVM…")
-
-    code, out, err = run_cmd(
-        ["nvm", "ls-remote", "--lts"], capture_output=True, use_bash_login=True
-    )
-    if code != 0 or not out:
-        logging.error(f"Failed to list remote LTS versions: {err}")
-        sys.exit(1)
-
-    last_line = out.splitlines()[-1].strip()
-    if not last_line:
-        logging.error("No LTS versions found in nvm ls-remote output.")
-        sys.exit(1)
-
-    latest_lts = last_line.split()[0]
-    logging.info(f"Latest LTS version detected: {latest_lts}")
-
-    code, current_node, err = run_cmd(
-        ["nvm", "current"], capture_output=True, use_bash_login=True
-    )
-    current_node = current_node.strip()
-    if current_node != latest_lts:
-        logging.info(f"Installing Node.js {latest_lts} (latest LTS)…")
-        code, _, err = run_cmd(
-            ["nvm", "install", "--lts"], capture_output=True, use_bash_login=True
-        )
-        if code != 0:
-            logging.error(f"Failed to install Node.js {latest_lts}: {err}")
-            sys.exit(1)
-    else:
-        logging.info(f"Already using Node.js {current_node} (latest LTS)")
-
-    run_cmd(["nvm", "alias", "default", "lts/*"], use_bash_login=True)
-    run_cmd(["nvm", "use", "default"], use_bash_login=True)
-    logging.info("Node.js LTS setup complete.")
+    latest = re.findall(r"v\d+\.\d+\.\d+", re.sub(r"\x1B\[[0-9;]*m", "", out))[-1]
+    if run(["nvm", "current"], capture=True, bash=True)[1].strip() != latest:
+        run(["nvm", "install", "--lts"], bash=True)
+    run(["nvm", "alias", "default", "lts/*"], bash=True)
+    run(["nvm", "use", "default"], bash=True)
+    logger.info(f"Node {latest} active")
 
 
 def upgrade_npm(step: int) -> None:
-    """
-    Step 6: Upgrade npm itself to the latest version globally.
-    """
-    print_global_progress(step, "Upgrade npm")
-    logging.info("Upgrading npm to the latest version…")
-    code, out, err = run_cmd(
-        ["npm", "install", "-g", "npm@latest"], capture_output=True
+    bar(step, "npm")
+    run(["npm", "install", "-g", "npm@latest"])
+    logger.info("npm upgraded")
+
+
+def upgrade_global(step: int) -> None:
+    bar(step, "npm -g")
+    rc, out, _ = run(
+        ["npm", "-g", "outdated", "--parseable", "--depth=0"], capture=True
     )
-    if code != 0:
-        logging.error(f"npm upgrade failed: {err}")
-        sys.exit(1)
-    code, npm_ver, err = run_cmd(["npm", "-v"], capture_output=True)
-    if code == 0:
-        logging.info(f"npm successfully upgraded to {npm_ver}")
+    if not rc and out.strip():
+        run(["npm", "-g", "update"])
+        logger.info("Global packages updated")
     else:
-        logging.warning(f"Could not verify npm version: {err}")
+        logger.info("Global packages already up-to-date")
 
 
-def upgrade_global_packages(step: int) -> None:
-    """
-    Step 7: Upgrade any outdated global npm packages (depth=0).
-    """
-    print_global_progress(step, "Upgrade global npm packages")
-    logging.info("Checking for outdated global npm packages…")
-    code, out, err = run_cmd(
-        ["npm", "-g", "outdated", "--parseable", "--depth=0"], capture_output=True
+def versions(step: int) -> None:
+    bar(step, "versions")
+    for cmd in ("nvm --version", "node -v", "npm -v"):
+        run(cmd.split(), capture=True, bash=("nvm" in cmd))
+    logger.info("Version snapshot logged")
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Dependency reconciliation
+# ────────────────────────────────────────────────────────────────────────────────
+def bump_deps(root: Path, step: int) -> None:
+    bar(step, "deps ↑")
+
+    pkg_file = root / "package.json"
+    pkg_data = json.loads(pkg_file.read_text())
+    deps, dev_deps = pkg_data.get("dependencies", {}), pkg_data.get(
+        "devDependencies", {}
     )
-    outdated = out.strip().splitlines()
-    if outdated and not (len(outdated) == 1 and outdated[0] == ""):
-        logging.info("Outdated global packages detected:")
-        for line in outdated:
-            parts = line.split(":")
-            if len(parts) >= 4:
-                logging.info(
-                    f"  • {
-                        parts[1]} (current: {
-                        parts[2]}, latest: {
-                        parts[3]})"
-                )
-        logging.info("Updating global packages…")
-        code, _, err = run_cmd(["npm", "-g", "update"], capture_output=True)
-        if code != 0:
-            logging.error(f"Global npm update failed: {err}")
-            sys.exit(1)
-        logging.info("Global npm packages updated successfully.")
-    else:
-        logging.info("All global npm packages are up to date.")
 
-
-def print_installed_versions(step: int) -> None:
-    """
-    Step 8: Print and log installed versions of nvm, node, npm, and global packages summary.
-    """
-    print_global_progress(step, "Print installed versions")
-    logging.info("Installed versions and global packages summary:")
-    commands = [
-        (["nvm", "--version"], True),
-        (["node", "-v"], False),
-        (["npm", "-v"], False),
-        (["npm", "list", "-g", "--depth=0"], False),
-    ]
-    total = len(commands)
-    for idx, (command, use_bash) in enumerate(commands, start=1):
-        percent = idx / total
-        filled = int(percent * BAR_LENGTH)
-        bar = "#" * filled + " " * (BAR_LENGTH - filled)
-        print(
-            f"\rVerifying versions: [{bar}] {
-                percent *
-                100:5.1f}%  ",
-            end="",
-            flush=True,
-        )
-
-        if command[0] == "nvm":
-            code, out, err = run_cmd(command, capture_output=True, use_bash_login=True)
-        else:
-            code, out, err = run_cmd(command, capture_output=True)
-
-        if code == 0:
-            for line in out.splitlines():
-                logging.info(f"  {line}")
-        else:
-            logging.warning(f"Failed to run '{' '.join(command)}': {err}")
-
-    print(f"\rVerifying versions: [{'#' * BAR_LENGTH}] 100.0%")
-    logging.info("Finished printing installed versions.")
-
-
-def bump_dependencies(project_root: Path, step: int) -> None:
-    """
-    Step 9: Upgrade direct dependencies/devDependencies in package.json under project_root:
-    - Respect "overrides" field: force-bump those packages to ^latest.
-    - For other deps, bump if latest satisfies peerDependencies.
-    - Auto-align react & react-dom minor/major if mismatched.
-    - If changes made, write back and run npm install; else remove temp.
-    """
-    print_global_progress(step, "Bump dependencies")
-    logging.info("Upgrading direct dependencies/devDependencies in package.json…")
-    pkg_json_path = project_root / "package.json"
-    try:
-        with pkg_json_path.open("r", encoding="utf-8") as f:
-            pkg_data = json.load(f)
-    except Exception as e:
-        logging.error(f"Failed to read package.json: {e}")
-        sys.exit(1)
-
-    overrides = set(pkg_data.get("overrides", {}).keys())
-    dependencies = pkg_data.get("dependencies", {})
-    dev_dependencies = pkg_data.get("devDependencies", {})
-
-    all_pkgs = set(dependencies.keys()) | set(dev_dependencies.keys())
-    if not all_pkgs:
-        logging.info("No direct dependencies or devDependencies found.")
-        return
-
-    temp_path = project_root / "package.json.tmp"
-    try:
-        with temp_path.open("w", encoding="utf-8") as f:
-            json.dump(pkg_data, f, indent=2)
-    except Exception as e:
-        logging.error(f"Failed to create temporary package.json: {e}")
-        sys.exit(1)
-
-    changed = False
-    pkg_list = sorted(all_pkgs)
-    total_pkgs = len(pkg_list)
-    for idx, pkg in enumerate(pkg_list, start=1):
-        percent = idx / total_pkgs
-        filled = int(percent * BAR_LENGTH)
-        bar = "#" * filled + " " * (BAR_LENGTH - filled)
-        print(
-            f"\rUpgrading deps:    [{bar}] {
-                percent *
-                100:5.1f}%  ",
-            end="",
-            flush=True,
-        )
-
-        with temp_path.open("r", encoding="utf-8") as f:
-            tmp_data = json.load(f)
-        tmp_deps = tmp_data.get("dependencies", {})
-        tmp_devdeps = tmp_data.get("devDependencies", {})
-
-        cur_spec = tmp_deps.get(pkg) or tmp_devdeps.get(pkg)
-        if not cur_spec:
-            continue
-
-        code, latest_ver, err = run_cmd(
-            ["npm", "view", pkg, "version"], capture_output=True
-        )
-        if code != 0 or not latest_ver:
-            logging.warning(f"Could not fetch latest version for {pkg}: {err}")
-            continue
-
-        if pkg in overrides:
-            logging.info(f"{pkg:30s} override → {latest_ver}")
-            if pkg in tmp_deps:
-                tmp_deps[pkg] = f"^{latest_ver}"
-            else:
-                tmp_devdeps[pkg] = f"^{latest_ver}"
-            tmp_data["dependencies"] = tmp_deps
-            tmp_data["devDependencies"] = tmp_devdeps
-            changed = True
-            with temp_path.open("w", encoding="utf-8") as f:
-                json.dump(tmp_data, f, indent=2)
-            continue
-
-        semver_cmd = ["npx", "semver", "-r", cur_spec, latest_ver]
-        code, _, _ = run_cmd(semver_cmd, capture_output=True)
-        if code == 0:
-            continue
-
-        code, peer_json, err = run_cmd(
-            ["npm", "view", f"{pkg} @{latest_ver} ", "peerDependencies", "--json"],
-            capture_output=True,
-        )
-        peers: Dict[str, str] = {}
-        if code == 0 and peer_json and peer_json not in ("null", ""):
-            try:
-                peers = json.loads(peer_json)
-            except json.JSONDecodeError:
-                logging.warning(f"Invalid peerDependencies JSON for {pkg}@{latest_ver}")
-                peers = {}
-
-        ok_peers = True
-        for pd_pkg, pd_range in peers.items():
-            inst_ver = tmp_deps.get(pd_pkg) or tmp_devdeps.get(pd_pkg)
-            if not inst_ver:
-                continue
-            code, _, _ = run_cmd(
-                ["npx", "semver", "-r", pd_range, inst_ver], capture_output=True
-            )
-            if code != 0:
-                ok_peers = False
-                break
-
-        if ok_peers:
-            logging.info(f"{pkg:30s} candidate → {latest_ver}")
-            if pkg in tmp_deps:
-                tmp_deps[pkg] = f"^{latest_ver}"
-            else:
-                tmp_devdeps[pkg] = f"^{latest_ver}"
-            tmp_data["dependencies"] = tmp_deps
-            tmp_data["devDependencies"] = tmp_devdeps
-            changed = True
-            with temp_path.open("w", encoding="utf-8") as f:
-                json.dump(tmp_data, f, indent=2)
-
-    print(f"\rUpgrading deps:    [{'#' * BAR_LENGTH}] 100.0%")
-    # Auto-align react & react-dom if mismatch
-    with temp_path.open("r", encoding="utf-8") as f:
-        tmp_data = json.load(f)
-    tmp_deps = tmp_data.get("dependencies", {})
-    tmp_devdeps = tmp_data.get("devDependencies", {})
-
-    r_act = tmp_deps.get("react") or tmp_devdeps.get("react")
-    r_dom = tmp_deps.get("react-dom") or tmp_devdeps.get("react-dom")
-
-    def minor_major(version: str) -> str:
-        parts = version.lstrip("^~").split(".")
-        return ".".join(parts[:2]) if len(parts) >= 2 else version
-
-    if r_act and r_dom and minor_major(r_act) != minor_major(r_dom):
-        target = r_act if minor_major(r_act) < minor_major(r_dom) else r_dom
-        logging.info(f"react/react-dom mismatch → aligning both to {target}")
-        if "react" in tmp_deps:
-            tmp_deps["react"] = target
-        else:
-            tmp_devdeps["react"] = target
-        if "react-dom" in tmp_deps:
-            tmp_deps["react-dom"] = target
-        else:
-            tmp_devdeps["react-dom"] = target
-        tmp_data["dependencies"] = tmp_deps
-        tmp_data["devDependencies"] = tmp_devdeps
-        changed = True
-        with temp_path.open("w", encoding="utf-8") as f:
-            json.dump(tmp_data, f, indent=2)
-
-    if changed:
+    # Peer ranges from installed tree
+    rc, ls_json, _ = run(
+        ["npm", "ls", "--json", "--depth=1"], cwd=root, capture=True, timeout=300
+    )
+    peer: Dict[str, List[str]] = {}
+    if not rc and ls_json:
         try:
-            shutil.move(str(temp_path), str(pkg_json_path))
-        except Exception as e:
-            logging.error(f"Failed to replace package.json: {e}")
-            sys.exit(1)
-        logging.info("package.json updated with bumped dependencies.")
-        logging.info("Installing updated dependencies…")
-        code, _, err = run_cmd(
-            ["npm", "install", "--legacy-peer-deps"], cwd=project_root
-        )
-        if code != 0:
-            logging.warning(
-                f"npm install --legacy-peer-deps failed: {err}. Trying --force…"
-            )
-            code, _, err = run_cmd(["npm", "install", "--force"], cwd=project_root)
-            if code != 0:
-                logging.error(f"npm install --force failed: {err}")
-                sys.exit(1)
-        code, _, err = run_cmd(["npm", "dedupe"], cwd=project_root)
-        if code != 0:
-            logging.warning(f"npm dedupe failed: {err}")
-    else:
-        try:
-            temp_path.unlink()
+            tree = json.loads(ls_json)
+            for child in tree.get("dependencies", {}).values():
+                for k, rng in child.get("peerDependencies", {}).items():
+                    peer.setdefault(k, []).append(rng)
         except Exception:
             pass
-        logging.info("No compatible dependency upgrades found.")
 
-    logging.info("Dependency bump step complete.")
+    changed = 0
+    all_roots = sorted(set(deps) | set(dev_deps))
+    for pkg_name in all_roots:
+        root_spec = deps.get(pkg_name) or dev_deps.get(pkg_name)
+        ranges = [root_spec] + peer.get(pkg_name, [])
+
+        # Fetch versions
+        rc, js, _ = run(
+            ["npm", "view", pkg_name, "versions", "--json"], capture=True, timeout=90
+        )
+        if rc or not js:
+            continue
+        try:
+            all_versions: List[str] = json.loads(js)
+        except Exception:
+            continue
+
+        best = highest_satisfying(all_versions, ranges)  # root + peers
+        if best is None and peer.get(pkg_name):  # fallback: peers only
+            best = highest_satisfying(all_versions, peer[pkg_name])
+
+        if best is None:
+            logger.info(f"CANDIDATE → {pkg_name:30} {root_spec:15} -> -- [CONFLICT]")
+            continue
+
+        new_spec = f"^{best}"
+        current_version = re.sub(r"^[^0-9]*", "", root_spec)
+
+        # Determine status
+        if try_parse(best) == try_parse(current_version):
+            action = "SAME"
+        else:
+            action = (
+                "UPGRADE" if safe_gt(best, current_version) else "DOWNGRADE peer-deps"
+            )
+
+        logger.info(
+            f"CANDIDATE → {pkg_name:30} {root_spec:15} -> {new_spec}  [{action}]"
+        )
+
+        # Only modify package.json for upgrade/downgrade
+        if action != "SAME":
+            container = deps if pkg_name in deps else dev_deps
+            container[pkg_name] = new_spec
+            changed += 1
+
+    if changed:
+        pkg_file.write_text(json.dumps(pkg_data, indent=2) + "\n")
+        if run(["npm", "install", "--legacy-peer-deps"], cwd=root)[0]:
+            if run(["npm", "install", "--force"], cwd=root)[0]:
+                logger.error("npm install failed")
+                sys.exit(1)
+        run(["npm", "dedupe"], cwd=root)
+        logger.info(f"Dependency upgrade complete ({changed} packages)")
+    else:
+        logger.info("No dependency changes needed")
 
 
-def final_audit(project_root: Path, step: int) -> None:
-    """
-    Step 10: Run `npm audit --omit=dev`. Warn if non-zero exit.
-    """
-    print_global_progress(step, "Final npm audit")
-    logging.info("Running final npm audit (omit dev dependencies)…")
-    code, out, err = run_cmd(["npm", "audit", "--omit=dev"], cwd=project_root)
-    if code != 0:
-        logging.warning("[ npm audit reported issues: ]")
-        for line in out.splitlines():
-            logging.warning(f"  {line}")
+def audit(step: int, root: Path) -> None:
+    bar(step, "npm audit")
+    if run(["npm", "audit", "--omit=dev"], cwd=root)[0]:
+        logger.warning("npm audit issues")
 
 
-def main():
-    # Step 1: Locate project root
-    print_global_progress(1, "Locate project root")
-    project_root = find_project_root()
-    logging.info(f"Project root detected: {project_root}")
+# ────────────────────────────────────────────────────────────────────────────────
+# Main
+# ────────────────────────────────────────────────────────────────────────────────
+def main() -> None:
+    bar(1, "locate root")
+    root = root_dir()
+    logger.info(f"Project root: {root}")
 
-    # Step 2: Verify prerequisites
-    print_global_progress(2, "Verify prerequisites")
-    verify_prerequisites()
+    bar(2, "prereq")
+    need("git", "curl", "jq", "npm")
 
-    # Step 3: Install/update NVM
-    install_or_update_nvm(3)
-
-    # Step 4: Ensure latest LTS Node.js
-    ensure_latest_lts_node(4)
-
-    # Step 5: Upgrade npm itself
+    ensure_nvm(3)
+    ensure_lts(4)
     upgrade_npm(5)
+    upgrade_global(6)
+    versions(7)
+    bump_deps(root, 8)
+    audit(9, root)
 
-    # Step 6: Upgrade global packages
-    upgrade_global_packages(6)
-
-    # Step 7: Print installed versions & summary
-    print_installed_versions(7)
-
-    # Step 8: Bump direct dependencies
-    bump_dependencies(project_root, 8)
-
-    # Step 9: Final npm audit
-    final_audit(project_root, 9)
-
-    # Step 10: Mark completion (fill bar fully)
-    print_global_progress(10, "All steps completed")
-    logging.info("All steps completed successfully.")
+    bar(10, "done")
+    logger.info("Update complete")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
-        logging.error(f"Unhandled exception: {e}")
+    except Exception as exc:
+        logger.error(f"Unhandled exception: {exc}")
         sys.exit(1)

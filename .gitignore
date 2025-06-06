@@ -266,4 +266,4 @@ test-results/
 
 # === Custom ===
 PROJECT_ROOT_CACHE
-.hsuky/
+.husky/

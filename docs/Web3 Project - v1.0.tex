@@ -1,0 +1,1153 @@
+\documentclass[13pt]{extarticle}
+
+% ----------------------------- Geometry & Core Layout -----------------------------
+\usepackage[a4paper, margin=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{caption,subcaption}
+
+% ----------------------------- Typography -----------------------------
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{english}
+\setmainfont{Linux Libertine O}
+\clubpenalty=10000
+\widowpenalty=10000
+
+% ----------------------------- Color & Tables -----------------------------
+\usepackage{colortbl}
+\usepackage{xcolor} % for grayscale toggle
+
+% ----------------------------- TikZ & Diagrams -----------------------------
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+
+% ----------------------------- Math -----------------------------
+\usepackage{amsmath}
+
+% ----------------------------- Hyperref & PDF Metadata -----------------------------
+\usepackage[pdfusetitle]{hyperref}
+\hypersetup{
+  pdfauthor={ENDEAVOR Labs},
+  pdftitle={Web3 Platform Strategy and Roadmap},
+  pdfsubject={Modular Non-Custodial Ecosystem},
+  pdfkeywords={Web3, DeFi, AI, NFTs, GDPR, MiCA},
+  colorlinks=false,
+  hidelinks
+}
+
+% ----------------------------- Grayscale Print Mode Toggle -----------------------------
+\newif\ifprint
+% Uncomment the next line to compile in print-safe grayscale
+% \printtrue
+
+\ifprint
+  \definecolor{primary1}{gray}{0.90} % for blue
+  \definecolor{primary2}{gray}{0.80} % for green
+  \definecolor{primary3}{gray}{0.70} % for red
+  \definecolor{accent1}{gray}{0.60}  % for purple
+  \definecolor{accent2}{gray}{0.75}  % for teal
+  \definecolor{accent3}{gray}{0.65}  % for orange
+\else
+  \definecolor{primary1}{rgb}{0.85,0.9,1.0}  % blueish
+  \definecolor{primary2}{rgb}{0.85,1.0,0.85} % greenish
+  \definecolor{primary3}{rgb}{1.0,0.85,0.85} % reddish
+  \definecolor{accent1}{rgb}{0.95,0.85,1.0}  % purple
+  \definecolor{accent2}{rgb}{0.85,1.0,1.0}   % teal
+  \definecolor{accent3}{rgb}{1.0,0.95,0.8}   % orange
+\fi
+
+
+\begin{document}
+
+% ==================== Title Page & Contents ====================
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries Web3 Platform Strategy and Roadmap\par}
+  \vspace{0.5cm}
+  {\rule{\textwidth}{1.5pt}\par}
+  \vspace{0.5cm}
+  {\Large\sffamily A Modular, Non-Custodial Ecosystem for DeFi, NFTs, Impact \& AI\par}
+  \vspace{1.7cm}
+  \begin{tikzpicture}
+    \begin{scope}
+      \fill[black] (0,0) ellipse (5.2cm and 4.0cm); % dark oval
+      \draw[white, thick] (0,0) ellipse (5.2cm and 4.0cm); % white border
+      \clip (0,0) ellipse (5.0cm and 3.8cm); % inner clip
+      \node at (0,0) {\includegraphics[width=10cm]{logo.jpg}};
+    \end{scope}
+  \end{tikzpicture}
+  \vspace{2cm}
+  % Left-aligned metadata list
+  \begin{flushleft}
+    \large
+    \begin{itemize}[leftmargin=1.5em,label={}]
+      \item \textbf{Prepared by:} ENDEAVOR Labs
+      \item \textbf{Version:} 1.0
+      \item \textbf{Date:} \today
+    \end{itemize}
+  \end{flushleft}
+  \vfill
+  \vspace{-1cm} % pulls text up from bottom by 1cm
+  {\centering\small\textbf{Confidential – For internal use only}\par}
+  \vspace{0.3cm}
+  {\centering\color{black} \rule{0.5\textwidth}{0.6pt}\par}
+\end{titlepage}
+
+
+% ==================== Executive Summary ====================
+\newpage
+\thispagestyle{empty}
+\begin{titlepage}
+  \pagecolor{primary1!10}
+  \centering
+  \vspace*{2cm}
+
+  {\Huge\bfseries Executive Summary\par}
+  \vspace{1.2cm}
+
+  \renewcommand{\arraystretch}{1.6}
+  \rowcolors{2}{white}{primary1!20}
+  \begin{tabular}{>{\bfseries}p{4.8cm} p{9.2cm}}
+    \toprule
+    \textbf{Component} & \textbf{Highlight} \\
+    \midrule
+    Mission            & Empower users with privacy-preserving, modular Web3 services across finance, identity, and impact. \\
+    Vision             & A non-custodial, AI-enhanced platform combining DeFi, gamified engagement, philanthropy, and real-world utility. \\
+    Product Modules    & Staking, Lending, NFTs, Betting, Referrals, Donations, Carbon Offsets, AI Reports, VPN/Data Marketplaces. \\
+    Monetization       & Subscription tiers, protocol fee cuts, minting/renewals, fantasy rakes, GPT-driven custom reports. \\
+    Compliance         & Fully GDPR-compliant, MiCA-aligned, non-custodial; avoids PSD2/HGC licenses via safe-harbor design. \\
+    Strategic Edge     & No asset custody, no token issuance; age-gated gamification; infrastructure powered by vetted protocols. \\
+    Technical Advantage& Unified dashboard, GraphQL API, LangChain+GPT automation, cross-chain orchestration, scalable DevOps. \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace*{\fill}
+  \vspace*{-1cm}
+  {\centering\color{black}\rule{0.5\textwidth}{0.6pt}\par}
+  \vspace{0.3cm}
+  {\centering\small\textbf{Confidential – For internal use only}\par}
+  \nopagecolor
+\end{titlepage}
+
+
+% =============================================================
+%   TABLE OF CONTENTS
+% =============================================================
+\newpage
+\tableofcontents
+\thispagestyle{plain}
+
+
+\newpage
+% ===============================================================
+% 0. HOW TO USE THIS DECK
+% ===============================================================
+\section*{How to Use This Deck}
+\addcontentsline{toc}{section}{How to Use This Deck}
+
+\vspace{1em}
+
+% Investors & Executives
+\subsection*{Investors \& Executives}
+\begin{itemize}[leftmargin=2em,noitemsep]
+  \item Sections 1–2: Market \& Product Overview
+  \item Section 6: Financial Simulation \& Profit Strategy
+  \item Section 7: Workflows \& Roadmap
+  \item Section 8: Competitive Matrix \& Risk Mitigation
+  \item Section 9: Glossary
+\end{itemize}
+
+% Product & Marketing Teams
+\subsection*{Product \& Marketing Teams}
+\begin{itemize}[leftmargin=2em,noitemsep]
+  \item Sections 1–2: Feature Breakdown
+  \item Section 5: AI Use Cases
+  \item Sections 7.1–7.3: User Journeys \& Revenue Flows
+  \item Section 8: Competitive Stack \& Mitigations
+\end{itemize}
+
+% Developers & Architects
+\subsection*{Developers \& Architects}
+\begin{itemize}[leftmargin=2em,noitemsep]
+  \item Section 4: Technology Stack
+  \item Section 5: AI Usage
+  \item Section 7: Workflows \& Integration Diagrams
+  \item Section 8: Risk Mitigation
+\end{itemize}
+
+% Legal & Compliance
+\subsection*{Legal \& Compliance}
+\begin{itemize}[leftmargin=2em,noitemsep]
+  \item Section 3: Regulatory Framework
+  \item Section 7.6: Compliance Mapping
+  \item Section 8: Risk Taxonomy \& Countermeasures
+  \item Section 9: Glossary
+\end{itemize}
+
+
+\newpage
+% ===============================================================
+% 1. PLATFORM OVERVIEW
+% =============================================================
+\section{Platform Overview}
+
+Our platform delivers a fully modular Web3 ecosystem—combining decentralized finance, tokenized engagement, impact-driven giving, core infrastructure services, and AI-powered insights—organized into five service categories to meet a broad spectrum of user needs. 
+
+\subsection{Service Categories \& Activities}
+\begin{itemize}[left=1em]
+  \item \textbf{DeFi Core}
+    \begin{itemize}[left=1.2em]
+      \item Crypto Staking
+      \item Lending \& Borrowing
+    \end{itemize}
+
+  \item \textbf{Engagement \& Gamification}
+    \begin{itemize}[left=1.2em]
+      \item NFTs \& Access Passes
+      \item Betting \& Fantasy Leagues
+      \item Referral \& Quiz-to-Earn
+    \end{itemize}
+
+  \item \textbf{Impact \& Giving}
+    \begin{itemize}[left=1.2em]
+      \item Decentralized Philanthropy \& Micro-Donations
+      \item ESG \& Carbon-Offset Marketplace
+    \end{itemize}
+
+  \item \textbf{Infrastructure Services}
+    \begin{itemize}[left=1.2em]
+      \item Decentralized Data Marketplace
+      \item Decentralized Storage \& Compute Marketplace
+      \item Decentralized VPN
+    \end{itemize}
+
+  \item \textbf{Insights \& Reporting}
+    \begin{itemize}[left=1.2em]
+      \item AI Analytics \& Education
+      \item Tax \& Portfolio Reporting
+    \end{itemize}
+\end{itemize}
+
+\subsection{Category Details}
+
+\subsubsection{DeFi Core}
+
+\paragraph{Crypto Staking}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Delegate ETH or tokens to liquid-staking protocols (Lido, RocketPool, Aave).
+      \item Earn network rewards without managing validator infrastructure.
+      \item Benefit from protocol-level security and decentralization.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Non-custodial wrapper batches and compounds user stakes on-chain.
+      \item Charges a 0.2–0.3\% fee on staking rewards.
+      \item Offers premium dashboards at EUR 10–20/month for analytics and alerts.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item All funds flow directly user→protocol; no custody held by us.
+      \item Display only third-party APYs (MiCA safe-harbor compliance).
+      \item Standard Terms \& Conditions and disclaimers; no fund-manager licensing.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Lending \& Borrowing}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Supply and borrow assets via on-chain markets (Aave, Compound).
+      \item Access flash loans for arbitrage and liquidity operations.
+      \item Users retain full custody of collateral at all times.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Aggregates best rates and routes transactions through protocols.
+      \item Applies a 0.1–0.2\% referral fee on each deposit or borrow.
+      \item Implements fixed premiums for flash-loan usage.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item We act solely as a front-end; no credit risk or balance-sheet exposure.
+      \item All activity executes on audited third-party contracts.
+      \item Disclaimers clarify non-custodial status; no banking license required.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Engagement \& Gamification}
+
+\paragraph{NFTs \& Access Passes}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Mint and trade ERC-721 collectibles with on-chain royalties.
+      \item Issue ERC-1155 time-limited access passes for premium features.
+      \item Enable modular load-outs for gaming avatars and utilities.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Deploy audited minting contracts; enforce 5–10\% royalties.
+      \item Charge EUR 3–5 per NFT mint; EUR 10/month per active pass.
+      \item Auto-expire and renew passes; integrate with premium UI components.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item Classified as collectibles; no securities or investment contracts.
+      \item Utility-only passes; clear “no financial advice” disclaimers.
+      \item GDPR-compliant metadata handling; no custody of user assets.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Betting \& Fantasy Leagues}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Place prediction bets via Azuro Protocol with oracle settlement.
+      \item Draft NFT-based fantasy teams for seasonal contests.
+      \item Engage community via competitive, gamified experiences.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Integrate Azuro front-end fees of 1–3\%.
+      \item Collect a 5\% rake on fantasy league stakes.
+      \item Award NFT prizes to winning participants.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item “For entertainment only” and age-gate (18+) disclaimers.
+      \item Funds flow user→protocol; we extract fees on-chain.
+      \item No HGC license needed, as we never custody wagered funds.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Referral \& Quiz-to-Earn}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Track new users via on-chain referral links.
+      \item Deliver educational quizzes powered by GPT-4.
+      \item Mint badge NFTs for quiz completion and referrals.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Smart contracts attribute sign-ups and quizzes to referrers.
+      \item Sponsor-funded prize pools for quiz winners.
+      \item Badge minting and token rewards automate via on-chain logic.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item Rewards are digital tokens; no fiat or cash prizes.
+      \item Clear T\&Cs define eligibility and token utility.
+      \item GDPR-compliant storage of referral metadata off-chain.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Infrastructure Services}
+
+\paragraph{Decentralized Data Marketplace}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Curate on-chain/off-chain data feeds for Web3 apps.
+      \item Enable pay-per-query access to premium oracles.
+      \item Facilitate provider discovery via ratings and analytics.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Integrate Ocean Protocol and API3 marketplaces.
+      \item Collect a 2\% referral fee on each query transaction.
+      \item Offer usage dashboards and recommendation engine.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item Payments route user→provider contracts; no custody.
+      \item Only store data pointers/hashes on-chain (GDPR safe).
+      \item Terms specify read-only data access—no personal data retention.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Decentralized Storage \& Compute Marketplace}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Combine peer-to-peer file storage and compute rentals.
+      \item Seamlessly provision storage and CPU/GPU in one UI.
+      \item Leverage global node networks for redundancy and cost efficiency.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Mark up storage at EUR 0.01/GB-month.
+      \item Apply a 3\% referral fee on compute rental hours.
+      \item Automate provisioning via our orchestration layer.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item All payments flow directly user→protocol; no custody.
+      \item GDPR-compliant metadata handling; no PII on-chain.
+      \item Publish clear SLAs; no data ownership disputes.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Decentralized VPN}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Provide censorship-resistant VPN bandwidth from node operators.
+      \item Guarantee privacy via end-to-end encryption.
+      \item Offer usage-based billing per GB.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Integrate Sentinel or Orchid bandwidth markets.
+      \item Charge a 5\% referral fee on per-GB payments.
+      \item Route traffic through decentralized nodes for resilience.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item No logging or custody of user data; purely referral-based.
+      \item Abide by GDPR privacy standards for metadata.
+      \item Transparent user agreements on no-log policy.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Impact \& Giving}
+
+\paragraph{Decentralized Philanthropy \& Micro-Donations}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Enable micro-donations directly to charities on-chain.
+      \item Provide transparency and real-time impact metrics.
+      \item Support a variety of verified non-profit recipients.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Donor→charity flows via Giveth/The Giving Block contracts.
+      \item Apply a 1–2\% platform fee on each donation.
+      \item Display dashboards of total donations per cause.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item No custody of donor funds; direct on-chain transfers.
+      \item Charities maintain their own compliance and licensing.
+      \item GDPR-compliant donor opt-in and off-chain data erasure.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{ESG \& Carbon-Offset Marketplace}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Offer tokenized carbon credits in standardized lots.
+      \item Allow users to offset their on-chain footprint.
+      \item Issue on-chain badges to record offset history.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Purchase credits from Toucan/KlimaDAO.
+      \item Resell at a 5\% spread over market price.
+      \item Mint impact badges tied to user wallets.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item Credits held by registry; we never custody purchase funds.
+      \item Adhere to voluntary carbon standards; no finance licensing.
+      \item Transparent reporting and GDPR-compliant user data handling.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Insights \& Reporting}
+
+\paragraph{AI Analytics \& Education}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Use GPT-4 to analyze on-chain behavior and market trends.
+      \item Generate personalized tutorials, newsletters, and alerts.
+      \item Offer anomaly detection for risk mitigation.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Subscribers (€10/month) receive unlimited dashboard access and periodic reports.
+      \item On-demand custom reports at EUR 2 each.
+      \item Embed insights into dashboards and chatbot support.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item Label all outputs “educational only”—no investment advice.
+      \item GDPR-compliant: only pseudonymous wallet data used.
+      \item Secure handling of API keys and user preferences.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Tax \& Portfolio Reporting}
+\begin{itemize}[left=1em]
+  \item \textbf{Concept:}
+    \begin{itemize}[left=1.2em]
+      \item Automate profit/loss and cost-basis calculations.
+      \item Export ready-to-file tax documents (CSV, PDF).
+      \item Support multiple jurisdictions with localized templates.
+    \end{itemize}
+  \item \textbf{Our Model:}
+    \begin{itemize}[left=1.2em]
+      \item Subscription at EUR 5/month for continuous updates.
+      \item Integrate Covalent and Zerion APIs for data ingestion.
+      \item Provide API access for enterprise accounting tools.
+    \end{itemize}
+  \item \textbf{Compliance:}
+    \begin{itemize}[left=1.2em]
+      \item GDPR-compliant data retention and erasure processes.
+      \item No storage of sensitive PII on-chain; all off-chain under user control.
+      \item Adherence to EU tax-reporting standards; clear non-advisory disclaimers.
+    \end{itemize}
+\end{itemize}
+
+
+\newpage
+% ===============================================================
+% 2. SERVICES AND EXTERNAL PROVIDERS
+% ===============================================================
+\section{Services and External Providers}
+
+Below are the external protocols and partners we integrate with, organized by service category:
+
+\subsection{DeFi Core}
+\begin{itemize}[left=1em]
+  \item \textbf{Lido, RocketPool, Aave} — liquid staking of ETH and other PoS tokens.  
+  \item \textbf{Aave, Compound} — collateralized lending markets and flash loans.
+\end{itemize}
+
+\subsection{Engagement \& Gamification}
+\begin{itemize}[left=1em]
+  \item \textbf{OpenSea, Zora, Rarible} — NFT minting, trading, and royalty enforcement.  
+  \item \textbf{Galxe, Gitcoin Passport} — on-chain reputation badge issuance.  
+  \item \textbf{Azuro Protocol} — decentralized prediction markets.  
+  \item \textbf{Custom Fantasy Engine} — NFT-based seasonal leagues.  
+  \item \textbf{GPT-4} — dynamic quiz content generation and badge minting.
+\end{itemize}
+
+\subsection{Impact \& Giving}
+\begin{itemize}[left=1em]
+  \item \textbf{Giveth, The Giving Block} — smart-contract donation flows and impact tracking.  
+  \item \textbf{Toucan, KlimaDAO} — tokenized carbon credits for voluntary offsetting.
+\end{itemize}
+
+\subsection{Infrastructure Services}
+\begin{itemize}[left=1em]
+  \item \textbf{Ocean Protocol, API3} — on-chain and off-chain data feed marketplaces.  
+  \item \textbf{Arweave, IPFS, Filecoin, Storj} — decentralized file storage networks.  
+  \item \textbf{Akash, Golem} — peer-to-peer compute resource rentals.  
+  \item \textbf{Sentinel, Orchid} — decentralized VPN bandwidth marketplaces.
+\end{itemize}
+
+\subsection{Insights \& Reporting}
+\begin{itemize}[left=1em]
+  \item \textbf{OpenAI GPT-4} — AI analytics, tutorials, anomaly detection, custom reports.  
+  \item \textbf{Covalent API, Zerion} — portfolio data aggregation and tax-report export.
+\end{itemize}
+
+\newpage
+% ===============================================================
+% 3. LEGAL & COMPLIANCE
+% ===============================================================
+\section{Legal \& Compliance}
+
+\subsection{Non-Custodial Architecture}
+\begin{itemize}[left=1em]
+  \item \textbf{Direct On-Chain Flows:} All user transactions (staking, lending, donations, purchases) execute directly with audited third-party smart contracts; our platform simply orchestrates calls and collects fees.
+  \item \textbf{No Asset Control:} We never hold, move, or custody user funds—wallets sign every transaction, ensuring clear separation from any licensed financial intermediary role.
+  \item \textbf{Audit Transparency:} All wrapper and fee-collection contracts are publicly verified and undergo regular security reviews.
+\end{itemize}
+
+\subsection{Licensing \& Regulatory Safe-Harbors}
+\begin{itemize}[left=1em]
+  \item \textbf{Payment Services Exemption:} Storage, compute, VPN, and data marketplace payments flow user→provider; our referral fees are collected on-chain only, avoiding PSP/EMI licensing under PSD2 in Greece/EU.
+  \item \textbf{Charity \& Offsets:} Donation and carbon-offset flows go directly donor→charity or registry contracts; our platform fee is an on-chain markup, not a custodial collection, so no charity or financial-asset license is required.
+  \item \textbf{DeFi Integrations:} Staking, lending, and prediction markets leverage external protocols’ compliance frameworks (MiCA for staking, local HGC guidance for betting), with our platform adding only front-end fees.
+\end{itemize}
+
+\subsection{Data Protection \& GDPR}
+\begin{itemize}[left=1em]
+  \item \textbf{Pseudonymous Interaction:} We never require personal identifiers on-chain; wallet addresses serve as the sole identifier for all on-chain activity.
+  \item \textbf{Opt-In \& Consent:} Any off-chain data (email for newsletters or KYC-lite access passes) is collected via explicit opt-in forms, with full user control for data deletion or export.
+  \item \textbf{Off-Chain Erasure:} All user-provided personal data resides in encrypted databases under our GDPR policy; users can request complete erasure at any time.
+\end{itemize}
+
+\subsection{MiCA \& Financial Instruments}
+\begin{itemize}[left=1em]
+  \item \textbf{Safe-Harbor Display:} For staking APYs and other protocol yields, we display only third-party rates without bundling them into our own financial product, satisfying MiCA issuer exemptions.
+  \item \textbf{No Token Issuance:} We do not mint or distribute any platform-native tokens, avoiding any classification as a MiCA “asset-referencing token” issuer.
+  \item \textbf{Educational Disclaimers:} All AI analytics and market insights are labelled “educational only,” ensuring we do not inadvertently cross into regulated investment advice.
+\end{itemize}
+
+\subsection{Content \& Age-Gating}
+\begin{itemize}[left=1em]
+  \item \textbf{Entertainment-Only Messaging:} Betting, gaming, and lottery-style features carry prominent “for entertainment only” notices and require users to confirm they are 18+.
+  \item \textbf{Responsible Use Policies:} We provide links to helplines and resources for responsible gaming, in line with HGC guidelines.
+  \item \textbf{Terms \& Conditions:} Clear, concise T\&Cs cover each module’s scope, fee structure, and user obligations, minimizing legal ambiguity.
+\end{itemize}
+
+
+\newpage
+% ===============================================================
+% 4. TECHNOLOGY STACK
+% ===============================================================
+\section{Technology Stack}
+
+\subsection{Frontend}
+\begin{itemize}[left=1em]
+  \item \textbf{Framework:} React + Next.js (TypeScript) with SSR/ISR for fast, SEO-friendly pages  
+  \item \textbf{Styling:} Tailwind CSS + shadcn/ui components  
+  \item \textbf{State Management:} Zustand or Redux Toolkit for global state and caching  
+  \item \textbf{Data Fetching:} React Query or SWR for hooks-based API calls  
+  \item \textbf{Wallet Integration:} Wagmi + RainbowKit for multi-chain wallet connections  
+  \item \textbf{Testing:} Jest, React Testing Library, Cypress for end-to-end flows  
+\end{itemize}
+
+\subsection{Web3 Integration}
+\begin{itemize}[left=1em]
+  \item \textbf{RPC \& Transactions:} Ethers.js (Infura/Alchemy) with multicall batching  
+  \item \textbf{Indexing \& Subgraphs:} The Graph for custom queries and event indexing  
+  \item \textbf{Protocol SDKs:}  
+    \begin{itemize}[left=1.2em]
+      \item Staking: Lido, RocketPool  
+      \item Lending: Aave, Compound  
+      \item Betting: Azuro Protocol  
+      \item Treasury: Gnosis Safe SDK  
+      \item Data: Ocean Protocol, API3  
+      \item Storage/Compute: Arweave, IPFS, Filecoin, Storj; Akash, Golem  
+      \item VPN: Sentinel, Orchid  
+      \item ESG: Toucan, KlimaDAO  
+      \item Donations: Giveth, The Giving Block  
+    \end{itemize}
+  \item \textbf{GraphQL Gateway:} Apollo Server or Hasura for unified API layer  
+\end{itemize}
+
+\subsection{Backend \& API}
+\begin{itemize}[left=1em]
+  \item \textbf{Runtime:} Node.js (NestJS or Express) or Python (FastAPI/Flask)  
+  \item \textbf{Database:} PostgreSQL + Prisma ORM for relational data, with Redis for caching/rate-limiting  
+  \item \textbf{Authentication \& Security:} JWT/OAuth2, rate limits, input validation  
+  \item \textbf{API Specification:} Swagger/OpenAPI for interactive docs  
+  \item \textbf{Serverless \& Jobs:} AWS Lambda (or Azure Functions) for cron-style tasks and GPT-4 report generation  
+\end{itemize}
+
+\subsection{AI \& Data Services}
+\begin{itemize}[left=1em]
+  \item \textbf{LLM Orchestration:} LangChain for prompt chaining and memory management  
+  \item \textbf{LLM Provider:} OpenAI GPT-4 (chat, embeddings)  
+  \item \textbf{Vector Search:} Pinecone or Qdrant for similarity queries  
+  \item \textbf{Analytics \& Reporting:} Covalent, Zerion APIs, custom ETL pipelines  
+\end{itemize}
+
+\subsection{DevOps \& Monitoring}
+\begin{itemize}[left=1em]
+  \item \textbf{CI/CD:} GitHub Actions with Hardhat/Foundry for smart-contract testing and deployment  
+  \item \textbf{Containerization:} Docker, Kubernetes (or Railway) for scalable microservices  
+  \item \textbf{Logging \& Metrics:} ELK Stack, Prometheus \& Grafana for system health and on-chain metrics  
+  \item \textbf{Error Tracking:} Sentry, LogRocket for frontend and backend exception monitoring  
+  \item \textbf{Security Scans:} Tenderly, Slither, MythX for automated smart-contract vulnerability detection  
+\end{itemize}
+
+
+\newpage
+% ===============================================================
+% 5. AI USAGE
+% ===============================================================
+\section{AI Usage}
+
+\subsection{During Development}
+Our AI tools accelerate and standardize the development lifecycle:
+\begin{itemize}[left=1em]
+  \item \textbf{UI \& Component Scaffolding}
+    \begin{itemize}[left=1.2em]
+      \item GPT-4 generates React/Next.js component boilerplate from design descriptions.
+      \item Produces Tailwind + shadcn/ui markup and state-management hooks.
+      \item Ensures consistent styling and accessibility standards.
+    \end{itemize}
+  \item \textbf{Smart-Contract \& Test Generation}
+    \begin{itemize}[left=1.2em]
+      \item Drafts Solidity contract stubs for staking, lending, NFTs, etc.
+      \item Creates Hardhat/Foundry test suites with edge-case scenarios.
+      \item Reduces manual coding effort and improves coverage by ~30\%.
+    \end{itemize}
+  \item \textbf{Policy, Documentation \& Tutorial Drafting}
+    \begin{itemize}[left=1.2em]
+      \item Auto-generates GDPR/MiCA policy summaries and legal disclaimers.
+      \item Builds user guides, FAQs, and developer docs from feature specs.
+      \item Keeps all documentation in sync with code changes via automated pipelines.
+    \end{itemize}
+\end{itemize}
+
+\subsection{In Production}
+AI capabilities enhance user experience, engagement, and safety:
+\begin{itemize}[left=1em]
+  \item \textbf{Personalized Recommendations}
+    \begin{itemize}[left=1.2em]
+      \item Analyze wallet history and market conditions to suggest optimal staking and lending strategies.
+      \item Recommend carbon-offset lots and compute/storage bundles based on usage patterns.
+      \item Tailor NFT drops and quiz topics to individual interests.
+    \end{itemize}
+  \item \textbf{Automated Impact Summaries}
+    \begin{itemize}[left=1.2em]
+      \item Generate monthly reports on philanthropy and ESG offsets with visual metrics.
+      \item Craft social-media–ready summaries and badge notifications for user contributions.
+    \end{itemize}
+  \item \textbf{Data-Feed Discovery \& Sampling}
+    \begin{itemize}[left=1.2em]
+      \item Curate new on-chain/off-chain oracle feeds and rank by reliability.
+      \item Provide sample queries and cost estimates to help users test data before purchase.
+    \end{itemize}
+  \item \textbf{Anomaly Detection \& Alerts}
+    \begin{itemize}[left=1.2em]
+      \item Monitor all on-chain flows (bets, loans, donations, trades) for outliers.
+      \item Trigger real-time alerts or recommended actions via dashboard and chatbot.
+    \end{itemize}
+  \item \textbf{24/7 Chatbot Support}
+    \begin{itemize}[left=1.2em]
+      \item Handle common user questions about staking, borrowing, offsets, and data purchases.
+      \item Guide new users through wallet connection, pass minting, and quiz participation.
+      \item Escalate complex issues to human support when needed.
+    \end{itemize}
+\end{itemize}
+
+\newpage
+% ===============================================================
+% 6. FINANCIAL SIMULATION & PROFIT STRATEGY
+% ===============================================================
+\section{Financial Simulation \& Profit Strategy}
+
+Below is a detailed, mid-scale simulation of monthly revenues and costs, based on realistic user activity and fee structures.
+
+\subsection{Key Assumptions}
+\begin{enumerate}[left=1em]
+  \item \textbf{User Activity}
+    \begin{itemize}[left=1.2em]
+      \item \emph{Crypto Staking:} 1\,500 users, average stake 100 ETH, APR 6\%.
+      \item \emph{NFTs \& Passes:} 700 mints; 500 active passes.
+      \item \emph{Betting \& Fantasy:} 2\,000 bets per event, 5 events; 100 participants per fantasy league, €20 entry, 5 leagues.
+      \item \emph{Lending:} 500 referral transactions, average loan €2 000.
+      \item \emph{Data/Infra:} 5 000 data queries; 500 GB storage; 200 compute hrs; 100 GB VPN.
+      \item \emph{Impact:} 200 donations (€20 each); 100 t carbon offsets (€10/t).
+      \item \emph{AI \& Tax:} 2\,000 dashboard subscriptions; 1\,000 reports; 500 tax‐report subscriptions.
+    \end{itemize}
+  \item \textbf{Fee \& Price Parameters}
+    \begin{itemize}[left=1.2em]
+      \item Staking fee: 0.25\% of rewards.
+      \item NFT mint: €4; pass subscription: €10/month.
+      \item Bet fee: 2\%; fantasy rake: 5\%.
+      \item Lending referral: 0.15\%; flash‐loan premium: €5/tx.
+      \item Data fee: €0.01/query, referral 2\%.
+      \item Storage markup: €0.01/GB-month; compute fee: 3\%; VPN fee: 5\% of €0.02/GB.
+      \item Donation fee: 1.5\%; carbon spread: 5\%.
+      \item AI report: €2; analytics sub: €10/month; tax sub: €5/month.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Revenue Breakdown}
+\begin{itemize}[left=1em]
+  \item \textbf{Crypto Staking:}
+    \[
+      1\,500\times100\text{ ETH}=150\,000\text{ ETH};\quad
+      \text{annual rewards}=150\,000\times6\%=9\,000\text{ ETH};\quad
+      \text{monthly fee}= \frac{9\,000}{12}\times0.25\%\approx1.875\text{ ETH}\approx€3\,750
+    \]
+  \item \textbf{NFTs \& Access Passes:}
+    \[
+      700\times€4 + 500\times€10 = €2\,800 + €5\,000 = €7\,800
+    \]
+  \item \textbf{Betting \& Fantasy Leagues:}
+    \[
+      \underbrace{2\,000\times€20\times2\%\times5}_{\text{bets}} + 
+      \underbrace{(100\times€20\times5)\times5}_{\text{fantasy}} 
+      = €4\,000 + €500 = €4\,500
+    \]
+  \item \textbf{Lending Referrals:}
+    \[
+      500\times€2\,000\times0.15\% = €1\,500
+    \]
+  \item \textbf{Data, Storage, Compute \& VPN:}
+    \[
+      \begin{aligned}
+      &\text{Data: }5\,000\times€0.01\times2\%=€1.00,\\
+      &\text{Storage: }500\text{ GB}\times€0.01=€5.00,\\
+      &\text{Compute: }200\text{ h}\times€10\times3\%=€60.00,\\
+      &\text{VPN: }100\text{ GB}\times€0.02\times5\%=€0.10
+      \end{aligned}
+      \quad\Rightarrow\quad \text{Total} \approx €66.10
+    \]
+  \item \textbf{Impact \& Giving:}
+    \[
+      200\times€20\times1.5\% + 100\times(€10\times5\%) = €60 + €50 = €110
+    \]
+  \item \textbf{AI Analytics \& Reporting:}
+    \[
+      2\,000\times€10 + 1\,000\times€2 + 500\times€5 = €20\,000 + €2\,000 + €2\,500 = €24\,500
+    \]
+\end{itemize}
+
+\subsection{Operating Expenses}
+\begin{itemize}[left=1em]
+  \item Frontend hosting (Vercel): €20  
+  \item Backend hosting (Railway/Render): €25  
+  \item GPT-4 API usage: €50  
+  \item Domains \& tools: €20  
+\end{itemize}
+\[
+  \text{Total OpEx} = €115/\text{month}
+\]
+
+\subsection{Net Monthly Profit}
+\[
+  \begin{aligned}
+    \text{Total Revenue} &\approx 3\,750 + 7\,800 + 4\,500 + 1\,500 + 66.10 + 110 + 24\,500 \\
+                         &= €42\,226.10 \\
+    \text{Net Profit} &= €42\,226.10 - €115 \approx €42\,111.10
+  \end{aligned}
+\]
+
+Under these mid-scale assumptions, the platform can sustainably generate over \textbf{€42 000} net profit per month, driven principally by AI subscriptions and NFT/access-pass sales, with DeFi core and engagement modules as significant secondary streams.  
+
+
+\newpage
+% ===============================================================
+% 7. PLATFORM WORKFLOWS, ROADMAP & COMPLIANCE MAPPING
+% ===============================================================
+\section{Platform Workflows, Roadmap \& Compliance Mapping}
+
+% ----------------------------------------------------------------
+% 7.1 User Journey Flow
+% ----------------------------------------------------------------
+\subsection{User Journey Flow}
+
+\begin{center}
+\begin{tikzpicture}[
+    % adjust scale if needed for output (each diagram independently)
+    scale=1.05, transform shape,
+    node distance=1.5cm and 2cm,
+    every node/.style={font=\small\sffamily, align=center, draw, rounded corners, inner sep=4pt},
+    arrow/.style={->, thick, >=Latex}
+]
+  \node (wallet) [fill=primary1]     {Connect\\Wallet};
+  \node (stake)  [right=of wallet, fill=primary2]     {Stake};
+  \node (lend)   [right=of stake, fill=primary2]       {Borrow \&\\Lend};
+  \node (mint)   [right=of lend, fill=accent1]      {Mint NFT/\\Access Pass};
+
+  \node (bet)    [below=of wallet, yshift=1ex, fill=accent3]   {Betting \&\\Fantasy};
+  \node (donate) [right=of bet, fill=accent2]       {Donate \&\\Offset};
+  \node (quiz)   [right=of donate, fill=primary1]     {Quiz-to-\\Earn};
+  \node (ai)     [right=of quiz, fill=primary3]        {AI Analytics\\\& Report};
+
+  \draw[arrow] (wallet) -- (stake);
+  \draw[arrow] (stake)  -- (lend);
+  \draw[arrow] (lend)   -- (mint);
+  \draw[arrow] (mint)   -- (bet);
+  \draw[arrow] (bet)    -- (donate);
+  \draw[arrow] (donate) -- (quiz);
+  \draw[arrow] (quiz)   -- (ai);
+\end{tikzpicture}
+\end{center}
+
+\vspace{1cm}
+
+% ----------------------------------------------------------------
+% 7.2 Revenue Flow Model
+% ----------------------------------------------------------------
+\subsection{Revenue Flow Model}
+
+\begin{center}
+\begin{tikzpicture}[
+    % adjust scale if needed for output (each diagram independently)
+    scale=1.05, transform shape,
+    node distance=2cm,
+    every node/.style={font=\small\sffamily, align=center, draw, rounded corners, inner sep=4pt},
+    arrow/.style={->, thick, >=Latex}
+]
+  \node (engine) [fill=primary1] {Platform\\Fee Engine};
+
+  \node (stakeF) [above right=of engine, fill=primary2]  {Staking\\Fees};
+  \node (nftF)   [right=of engine, xshift=1cm, fill=accent1]  {NFT Mint \&\\Pass Sales};
+  \node (betF)   [below right=of engine, fill=accent3] {Betting\\Rakes};
+  \node (donF)   [below left=of engine, fill=accent2]    {Donation\\Fees};
+  \node (dataF)  [left=of engine, xshift=-1cm, fill=accent2]  {Data \& VPN\\Referral};
+  \node (aiF)    [above left=of engine, fill=primary3]     {AI Report\\Revenue};
+
+  \draw[arrow] (stakeF) -- (engine);
+  \draw[arrow] (nftF)   -- (engine);
+  \draw[arrow] (betF)   -- (engine);
+  \draw[arrow] (donF)   -- (engine);
+  \draw[arrow] (dataF)  -- (engine);
+  \draw[arrow] (aiF)    -- (engine);
+\end{tikzpicture}
+\end{center}
+
+\vspace{1cm}
+
+% ----------------------------------------------------------------
+% 7.3 Module Integration Diagram
+% ----------------------------------------------------------------
+\subsection{Module Integration Diagram}
+
+\begin{center}
+\begin{tikzpicture}[
+    % adjust scale if needed for output (each diagram independently)
+    scale=1.05, transform shape,
+    node distance=2cm and 2.2cm,
+    every node/.style={font=\small\sffamily, align=center, draw, rectangle, inner sep=4pt},
+    arrow/.style={->, thick, >=Latex}
+]
+  % Top row
+  \node (FE)   [fill=primary1]   {Frontend\\(React \& Next.js)};
+  \node (BE)   [right=of FE, fill=primary1]  {Backend/API\\(NestJS/FastAPI)};
+  \node (SC)   [right=of BE, fill=primary2]   {Smart Contracts\\(Solidity)};
+  \node (Prov) [right=of SC, fill=primary2]   {External Protocols};
+
+  % Bottom row
+  \node (AI)   [below=of BE, fill=primary3]     {AI Engine\\(GPT-4 \& LangChain)};
+  \node (Data) [below=of SC, fill=accent2]    {Data \& Storage\\(Postgres, IPFS)};
+
+  \draw[arrow] (FE)  -- (BE);
+  \draw[arrow] (BE)  -- (SC);
+  \draw[arrow] (SC)  -- (Prov);
+  \draw[arrow] (BE)  -- (AI);
+  \draw[arrow] (BE)  -- (Data);
+\end{tikzpicture}
+\end{center}
+
+\vspace{1cm}
+
+% ----------------------------------------------------------------
+% 7.4 Visual Roadmap
+% ----------------------------------------------------------------
+\newpage
+\subsection{Visual Roadmap}
+
+\begin{center}
+\begin{tikzpicture}[
+    % adjust scale if needed for output (each diagram independently)
+    scale=1.05, transform shape,
+    >=Latex,
+    every node/.style={
+      rectangle, draw, minimum height=1.2cm, text width=3.5cm,
+      align=left, font=\small\sffamily, rounded corners, inner sep=4pt
+    },
+    arrow/.style={->, thick}
+  ]
+
+  % Phase Nodes
+  \node (P1) at (0,0)            [fill=primary1]     {\textbf{Phase 1: Legal \& Planning}\\– IKE formation, GDPR/MiCA docs};
+  \node (P2) at (5.2,0)          [fill=primary2]    {\textbf{Phase 2: Core Infrastructure}\\– Staking \& lending wrappers, Giveth/Toucan};
+  \node (P3) at (10.4,0)         [fill=accent1]   {\textbf{Phase 3: Frontend MVP}\\– Wallet UI, NFT flows, quiz engine};
+
+  \node (P4) at (0,-3.2)         [fill=primary3]      {\textbf{Phase 4: AI \& Analytics}\\– GPT dashboards, anomaly detection};
+  \node (P5) at (5.2,-3.2)       [fill=accent2]     {\textbf{Phase 5: Closed Alpha}\\– 20–50 testers, UX \& disclaimers};
+  \node (P6) at (10.4,-3.2)      [fill=accent1]   {\textbf{Phase 6: Public Beta}\\– NFT mint, referrals, partners};
+
+  \node (P7) at (5.2,-6.4)       [fill=primary1]   {\textbf{Phase 7: Mainnet Launch}\\– Full rollout, marketing \& governance};
+  \node (P8) at (10.4,-6.4)      [fill=accent3]   {\textbf{Phase 8: Scale \& Iterate}\\– KPI tuning, DAO \& cross-chain};
+
+  % Primary Arrows
+  \draw[arrow] (P1) -- (P2);
+  \draw[arrow] (P2) -- (P3);
+  \draw[arrow] (P3) -- (P6);
+  \draw[arrow] (P6) -- (P8);
+
+  % Secondary Arrows
+  \draw[arrow] (P2) -- (P4);
+  \draw[arrow] (P4) -- (P5);
+  \draw[arrow] (P5) -- (P7);
+  \draw[arrow] (P7) -- (P8);
+
+\end{tikzpicture}
+\end{center}
+
+% ----------------------------------------------------------------
+% 7.5 Gantt-Style Roadmap
+% ----------------------------------------------------------------
+\subsection{Gantt-Style Roadmap}
+
+\begin{center}
+\begin{tikzpicture}[
+    % common configuration
+    x=1cm, y=1cm,
+    scale=1, transform shape,
+    font=\small\sffamily,
+    axis/.style={->, thick, >=Latex},
+    track/.style={rectangle, draw, rounded corners, minimum height=0.6cm, align=center},
+    milestone/.style={circle, draw, fill=primary3, inner sep=2pt},
+    grid/.style={gray!50, dashed}
+  ]
+  % --- Timeline axis
+  \draw[axis] (0,0) -- (12,0) node[right]{Weeks};
+
+  % --- Tracks (bars)
+  \draw[fill=primary2] (0,3-0.3) rectangle (3,3+0.3);
+  \draw[fill=primary3] (0,2-0.3) rectangle (8,2+0.3);
+  \draw[fill=accent2]  (2,1-0.3) rectangle (10,1+0.3);
+
+  % --- Track labels
+  \node at (-0.5,3) [anchor=east] {Legal};
+  \node at (-0.5,2) [anchor=east] {Development};
+  \node at (-0.5,1) [anchor=east] {Marketing};
+
+  % --- Milestones
+  \node[milestone] (m1) at (3,3) {};
+  \node[above,font=\scriptsize] at (m1.north) {Audit complete};
+
+  \node[milestone] (m2) at (8,2) {};
+  \node[above,font=\scriptsize] at (m2.north) {Beta launch};
+
+  \node[milestone] (m3) at (10,1) {};
+  \node[above,font=\scriptsize] at (m3.north) {Governance rollout};
+
+  % --- Vertical grid lines
+  \foreach \x in {0,2,4,6,8,10,12} {
+    \draw[grid] (\x,0.5) -- (\x,3.5);
+  }
+\end{tikzpicture}
+\end{center}
+
+% ----------------------------------------------------------------
+% 7.6 Compliance Mapping Table
+% ----------------------------------------------------------------
+\subsection{Compliance Mapping Table}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[H]
+  \centering
+  \begin{tabular}{>{\bfseries}p{3.8cm} p{4.5cm} p{6cm}}
+    \toprule
+    \textbf{Module}          & \textbf{Legal Classification} & \textbf{Compliance Strategy} \\
+    \midrule
+    Staking \& Lending       & Non-intermediary              & MiCA-safe display only; on-chain user signature \\
+    NFTs \& Access Passes    & Collectibles, not securities  & ERC-721/1155 metadata; “utility only” disclaimers \\
+    Betting \& Fantasy       & Entertainment service         & Age-gate (18+); Azuro routing; no gambling license \\
+    Donations \& Offsets     & Charitable payments           & Direct donor→charity; GDPR opt-in/erasure \\
+    AI Analytics \& Reports  & Informational service         & Pseudonymous data; “no investment advice” labels \\
+    Data \& VPN Services     & Marketplace referrals         & User→provider billing; GDPR metadata policies \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\newpage
+% ==================== 
+% 8. Competitive Matrix & Risk Mitigation ====================
+\section{Competitive Matrix \& Risk Mitigation}
+
+\subsection{Competitive Matrix}
+\begin{center}
+\rowcolors{2}{white}{gray!10}
+\begin{tabular}{>{\bfseries}p{4cm} p{5cm} p{5cm}}
+  \toprule
+  \textbf{Module} & \textbf{ENDEAVOR} & \textbf{Leading Competitors} \\
+  \midrule
+  DeFi Core
+    & Multi-protocol staking \& lending wrapper, best-rate routing, on-chain fee engine, AI-driven analytics
+    & Lido/Aave: single-protocol front-ends \\
+  NFTs \& Access Passes
+    & ERC-721/1155 minting, dynamic utility passes, quiz-to-earn integration
+    & OpenSea/Zora: trading \& royalty only \\
+  Betting \& Fantasy
+    & On-chain prediction markets, NFT-based fantasy leagues, community rewards
+    & Azuro/Sorare: separate bet or fantasy platforms \\
+  Data \& VPN Services
+    & Decentralized data marketplace + compute + VPN rentals via unified UI
+    & Ocean/API3 + Sentinel/Orchid: standalone data or VPN \\
+  Impact \& Giving
+    & Micro-donations, tokenized carbon offsets, real-time impact badges
+    & Giving Block/Toucan: one-dimensional donation or offset \\
+  AI Analytics \& Reporting
+    & GPT-4 insights, anomaly detection, custom reports, tax-ready exports
+    & Covalent/Zerion: portfolio/tax only \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{1cm}
+\subsection{Risk \& Mitigation}
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Regulatory Shifts}  
+    \emph{Risk:} Evolving MiCA/PSD2 or local gaming laws could constrain referral-fee models.  
+    \emph{Mitigation:} Maintain modular safe-harbor wrappers, quarterly counsel reviews, geo-fenced feature toggles.
+
+  \item \textbf{Smart-Contract Exploits}  
+    \emph{Risk:} Vulnerabilities in wrapper, quiz or fee-engine contracts.  
+    \emph{Mitigation:} Multi-stage audits (OpenZeppelin, Trail of Bits), continuous fuzzing, deploy on-chain insurance vault.
+
+  \item \textbf{Low Engagement \& Retention}  
+    \emph{Risk:} Quiz-to-earn and fantasy features underperform.  
+    \emph{Mitigation:} Gamification loops, tiered referral bonuses, A/B-tested UX flows, seasonal NFT drops.
+
+  \item \textbf{Data Reliability}  
+    \emph{Risk:} Oracles or storage networks become unavailable or manipulated.  
+    \emph{Mitigation:} Multi-source aggregation, fallback to centralized CDN, SLA-backed provider partnerships.
+
+  \item \textbf{AI Model Drift}  
+    \emph{Risk:} GPT-4 outputs degrade or produce false positives in anomaly detection.  
+    \emph{Mitigation:} Regular prompt tuning, human-in-the-loop validation, versioned model rollbacks.
+\end{itemize}
+
+
+\newpage
+% ===============================================================
+% 0'. GLOSSARY
+% ===============================================================
+\newpage
+\section*{Glossary}
+\addcontentsline{toc}{section}{Glossary}
+
+\vspace{2cm}
+\renewcommand{\arraystretch}{1.6}
+\rowcolors{2}{white}{gray!10}
+\begin{center}
+\begin{tabular}{>{\bfseries}p{4.8cm} p{9.2cm}}
+  \toprule
+  \textbf{Term} & \textbf{Definition} \\
+  \midrule
+
+  MiCA & Markets in Crypto-Assets regulation (EU) – governs token issuers and non-custodial services. \\
+
+  DeFi & Decentralized Finance – blockchain-based financial services without intermediaries. \\
+
+  NFT & Non-Fungible Token – unique digital asset using ERC-721 or ERC-1155 standard. \\
+
+  LP & Liquidity Provider – user who contributes assets to a DeFi pool in exchange for yield. \\
+
+  Azuro & Protocol for decentralized prediction markets and betting. \\
+
+  Lido & Liquid-staking protocol for Ethereum. \\
+
+  GDPR & General Data Protection Regulation (EU) – legal framework for data privacy. \\
+
+  PSD2 & EU directive governing electronic payments and licensing of payment providers. \\
+
+  Giveth & Donation infrastructure for decentralized philanthropy. \\
+
+  LangChain & Framework for orchestrating language models like GPT-4. \\
+
+  Safe-Harbor & Legal exemption that avoids requiring licenses under specific conditions. \\
+
+  Zero-Knowledge & Cryptographic technique for proving identity or facts without revealing information. \\
+
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vfill
+\vspace{-1cm} % pulls text up from bottom by 1cm
+{\centering\small\textbf{For internal use — definitions subject to regulatory context.}\par}
+\vspace{0.3cm}
+{\centering\color{black} \rule{0.5\textwidth}{0.6pt}\par}
+
+
+\end{document}

@@ -1,0 +1,27 @@
+Web3_Project/
+├── code_maintenance/
+│   ├── code_utils/
+│   │   ├── comment_git.py
+│   │   ├── fix_eof.py
+│   │   ├── fix_indentation.py
+│   │   ├── lint_and_format.py
+│   │   └── run_all.py
+│   ├── organization/
+│   │   ├── organization_log/
+│   │   │   ├── project_analytics.txt
+│   │   │   ├── project_struct.json
+│   │   │   └── project_struct.txt
+│   │   ├── project_analytics.py
+│   │   └── project_structure.py
+│   ├── update_env/
+│   │   ├── update_all.py
+│   │   ├── update_global.py
+│   │   ├── update_node.py
+│   │   └── update_venv.py
+│   └── maintain.py
+├── .gitignore
+├── LICENSE
+├── package.json
+└── README.md
+
+Total directories: 6, Total files: 19

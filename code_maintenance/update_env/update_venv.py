@@ -4,10 +4,11 @@ update_venv.py
 
 Upgrade pip and all installed Python packages within the current virtual environment.
 Automatically resolves dependency conflicts up to three passes, then logs the final
-installed packages and versions to update_log/python_log.txt.
+installed packages and versions to a shared “logs” folder under:
+    <project_root>/cache/code_maintenance/update_env/logs/python_log.txt
 
 Usage:
-python3 update_venv.py
+    python3 update_venv.py
 
 Behavior:
 1. Uses the virtual environment’s Python interpreter (sys.executable).
@@ -16,12 +17,15 @@ Behavior:
 4. Identifies all outdated packages via `pip list --outdated --format=json` and upgrades them.
 5. Attempts to resolve dependency conflicts (up to 3 passes) by parsing `pip check` output.
 6. Performs a final `pip check` to confirm no conflicts remain.
-7. Displays a summary of installed packages with `pip list --format=columns` and writes it to update_log.
+7. Displays a summary of installed packages with `pip list --format=columns` and appends it
+   (along with all other INFO/WARNING/ERROR messages) into:
+   <project_root>/cache/code_maintenance/update_env/logs/python_log.txt
 
 Logging:
 - INFO logs report progress and summary.
 - WARNING logs any failed upgrade attempts for specific packages.
 - ERROR logs fatal errors and exits.
+- All log messages (console + file) now go into the same shared log under “logs/”.
 
 Requirements:
 - Must be run from within an activated virtual environment.
@@ -33,18 +37,39 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Determine "update_log" folder relative to this script's own directory
+# Helper to find project root (the directory containing .gitignore)
+# ────────────────────────────────────────────────────────────────────────────────
+
+
+def find_project_root(start: Path) -> Optional[Path]:
+    current = start.resolve()
+    while True:
+        if (current / ".gitignore").is_file():
+            return current
+        if current == current.parent:
+            return None
+        current = current.parent
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Determine “logs” folder under:
+#     <project_root>/cache/code_maintenance/update_env/logs/
 # ────────────────────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).parent.resolve()
-LOG_DIR = SCRIPT_DIR / "update_log"
-LOG_FILE = "python_log.txt"
-LOG_DIR.mkdir(exist_ok=True)
+proj = find_project_root(SCRIPT_DIR)
+if not proj:
+    print("[ERROR] .gitignore not found; cannot locate project root.")
+    sys.exit(1)
+
+LOG_DIR = proj / "cache" / "code_maintenance" / "update_env" / "logs"
+LOG_FILE = "python_log.log"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 # ────────────────────────────────────────────────────────────────────────────────
-# Configure Logging
+# Configure Logging (console + shared log file)
 # ────────────────────────────────────────────────────────────────────────────────
 logger = logging.getLogger("update_venv")
 logger.setLevel(logging.INFO)
@@ -56,8 +81,8 @@ ch_formatter = logging.Formatter("%(message)s")
 ch.setFormatter(ch_formatter)
 logger.addHandler(ch)
 
-# File handler (timestamps)
-fh = logging.FileHandler(LOG_DIR / LOG_FILE, mode="a", encoding="utf-8")
+# File handler writes into shared logs folder in WRITE mode (truncates existing file)
+fh = logging.FileHandler(LOG_DIR / LOG_FILE, mode="w", encoding="utf-8")
 fh.setLevel(logging.INFO)
 fh_formatter = logging.Formatter(
     "%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S"
@@ -195,9 +220,7 @@ def list_outdated_packages(python_exe: str) -> List[str]:
         logger.info("All Python packages are already up to date.")
     else:
         logger.info(
-            f"Outdated packages detected ({
-                len(pkg_names)}): {
-                ', '.join(pkg_names)}"
+            f"Outdated packages detected ({len(pkg_names)}): {', '.join(pkg_names)}"
         )
     return pkg_names
 
@@ -216,8 +239,7 @@ def upgrade_packages(python_exe: str, packages: List[str]) -> None:
         filled = int(percent * BAR_LENGTH)
         bar = "#" * filled + " " * (BAR_LENGTH - filled)
         print(
-            f"\rUpgrading packages: [{bar}] {
-                percent * 100:5.1f}%",
+            f"\rUpgrading packages: [{bar}] {percent * 100:5.1f}%",
             end="",
             flush=True,
         )
@@ -304,8 +326,9 @@ def final_check(python_exe: str) -> bool:
 
 def show_installed_packages(python_exe: str) -> None:
     """
-    Step 6: Display installed packages in columns and also write the same summary
-    to 'update_log/python_log.txt'.
+    Step 6: Display installed packages in columns and append the same output
+    to the shared log file under:
+    <project_root>/cache/code_maintenance/update_env/logs/python_log.txt
     """
     print_global_progress(6, "Listing installed packages")
     logger.info("Installed package summary:")
@@ -315,7 +338,7 @@ def show_installed_packages(python_exe: str) -> None:
     # Print to console
     print(out)
 
-    # Append summary to log file
+    # Append summary to the shared log file
     try:
         with (LOG_DIR / LOG_FILE).open("a", encoding="utf-8") as f:
             f.write("\n" + out + "\n")
@@ -347,7 +370,7 @@ def main() -> None:
     if not final_check(python_exe):
         sys.exit(1)
 
-    # Step 6: Show installed package summary and log it to file
+    # Step 6: Show installed package summary and append to shared log
     show_installed_packages(python_exe)
 
     logger.info("Python environment upgrade complete.")

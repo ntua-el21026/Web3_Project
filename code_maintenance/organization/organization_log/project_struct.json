@@ -1,0 +1,112 @@
+{
+  "name": "Web3_Project",
+  "type": "directory",
+  "contents": [
+    {
+      "name": "code_maintenance",
+      "type": "directory",
+      "contents": [
+        {
+          "name": "code_utils",
+          "type": "directory",
+          "contents": [
+            {
+              "name": "comment_git.py",
+              "type": "file"
+            },
+            {
+              "name": "fix_eof.py",
+              "type": "file"
+            },
+            {
+              "name": "fix_indentation.py",
+              "type": "file"
+            },
+            {
+              "name": "lint_and_format.py",
+              "type": "file"
+            },
+            {
+              "name": "run_all.py",
+              "type": "file"
+            }
+          ]
+        },
+        {
+          "name": "organization",
+          "type": "directory",
+          "contents": [
+            {
+              "name": "organization_log",
+              "type": "directory",
+              "contents": [
+                {
+                  "name": "project_analytics.txt",
+                  "type": "file"
+                },
+                {
+                  "name": "project_struct.json",
+                  "type": "file"
+                },
+                {
+                  "name": "project_struct.txt",
+                  "type": "file"
+                }
+              ]
+            },
+            {
+              "name": "project_analytics.py",
+              "type": "file"
+            },
+            {
+              "name": "project_structure.py",
+              "type": "file"
+            }
+          ]
+        },
+        {
+          "name": "update_env",
+          "type": "directory",
+          "contents": [
+            {
+              "name": "update_all.py",
+              "type": "file"
+            },
+            {
+              "name": "update_global.py",
+              "type": "file"
+            },
+            {
+              "name": "update_node.py",
+              "type": "file"
+            },
+            {
+              "name": "update_venv.py",
+              "type": "file"
+            }
+          ]
+        },
+        {
+          "name": "maintain.py",
+          "type": "file"
+        }
+      ]
+    },
+    {
+      "name": ".gitignore",
+      "type": "file"
+    },
+    {
+      "name": "LICENSE",
+      "type": "file"
+    },
+    {
+      "name": "package.json",
+      "type": "file"
+    },
+    {
+      "name": "README.md",
+      "type": "file"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+===== ANALYSIS (No .gitignore) =====
+
+Total directories: 35,295
+Total files      : 287,983
+Total lines      : 43,588,159
+
+By language:
+  Batch        Files:       1  Lines: 5
+  C            Files:      39  Lines: 256,894
+  C#           Files:       1  Lines: 250
+  C++          Files:      32  Lines: 9,336
+  CSS          Files:     103  Lines: 15,991
+  CSV          Files:      67  Lines: 74,614
+  Config       Files:      15  Lines: 473
+  Dockerfile   Files:       1  Lines: 6
+  Env          Files:       1  Lines: 8
+  HTML         Files:     196  Lines: 19,268
+  INI          Files:       6  Lines: 84
+  JSON         Files:   7,381  Lines: 1,438,842
+  JavaScript   Files:  53,301  Lines: 6,971,524
+  Lockfile     Files:       4  Lines: 3,413
+  Log          Files:      10  Lines: 1,886
+  Other        Files: 124,363  Lines: 18,285,569
+  PHP          Files:       1  Lines: 156
+  PowerShell   Files:       2  Lines: 277
+  Python       Files:  58,796  Lines: 11,614,715
+  README       Files:   2,793  Lines: 523,567
+  Rust         Files:      26  Lines: 4,596
+  Shell        Files:      36  Lines: 1,932
+  TEXT         Files:     985  Lines: 1,004,306
+  TOML         Files:      33  Lines: 2,197
+  TypeScript   Files:  39,507  Lines: 3,267,944
+  XML          Files:      28  Lines: 85,365
+  YAML         Files:     255  Lines: 4,941
+
+===== ANALYSIS (With .gitignore) =====
+
+Total directories: 6
+Total files      : 19
+Total lines      : 4,733
+
+By language:
+  JSON         Files:  2  Lines: 206
+  Other        Files:  2  Lines: 290
+  Python       Files: 12  Lines: 4,161
+  README       Files:  1  Lines: 5
+  TEXT         Files:  2  Lines: 71
