@@ -4,7 +4,7 @@ lint_and_format.py
 
 Format and lint the repository’s Python & JS/TS sources, writing INFO-level output
 both to the terminal and to a shared log file at:
-    <project_root>/cache/code_maintenance/code_utils/logs/lint_and_format.log
+        <project_root>/cache/code_maintenance/code_utils/logs/lint_and_format.log
 
 Python pipeline
 ---------------
@@ -18,10 +18,10 @@ JS / TS pipeline
 eslint --fix   (via npx)
 
 This script honours .gitignore patterns, supports:
-    --skip-py   : skip the Python pipeline
-    --skip-js   : skip the JS/TS pipeline
-    --dry-run   : list candidate files without modifying
-    --verbose   : enable DEBUG-level logging
+        --skip-py   : skip the Python pipeline
+        --skip-js   : skip the JS/TS pipeline
+        --dry-run   : list candidate files without modifying
+        --verbose   : enable DEBUG-level logging
 
 Must be run from the project root (detected by locating package-lock.json).
 """
@@ -55,7 +55,7 @@ def setup_logging(project_root: Path) -> None:
     """
     Configure console and file logging.
     Log file is located at:
-        <project_root>/cache/code_maintenance/code_utils/logs/lint_and_format.log
+            <project_root>/cache/code_maintenance/code_utils/logs/lint_and_format.log
 
     We explicitly truncate any existing log before attaching the FileHandler.
     """
@@ -120,8 +120,8 @@ def load_ignore_spec(root: Path) -> PathSpec:
     """
     Read .gitignore-style files and build a PathSpec.
     For each non-blank line:
-      - If line starts with '#', strip that '#' and any following spaces → pattern.
-      - Otherwise, strip inline comments (anything after an unescaped '#').
+            - If line starts with '#', strip that '#' and any following spaces → pattern.
+            - Otherwise, strip inline comments (anything after an unescaped '#').
     For any pattern ending in '/', also add 'pattern/**' so all children are ignored.
     Always ignore '.git' and '.git/**'.
     """

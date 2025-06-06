@@ -7,10 +7,10 @@ We always use a pure‐Python walk so that .gitignore is 100% respected.
 A progress bar is shown while scanning the filesystem.
 
 Usage:
-    ./project_structure.py [--root /path/to/project]
-                           [--outdir /output/dir]
-                           [--show-summary-only]
-                           [--verbose]
+        ./project_structure.py [--root /path/to/project]
+                                                        [--outdir /output/dir]
+                                                        [--show-summary-only]
+                                                        [--verbose]
 """
 
 import argparse
@@ -50,12 +50,12 @@ def find_project_root(start_path: Path, marker: str = "package-lock.json") -> Pa
 def load_gitignore_patterns(root: Path, ignore_files: List[str]) -> pathspec.PathSpec:
     """
     Read lines from each ignore file (e.g. .gitignore) under `root`. For each line:
-      - Skip blank lines or those starting with '#'.
-      - If a pattern ends with '/', emit two patterns:
-          1) pattern.rstrip('/')
-          2) pattern.rstrip('/') + '/**'
-        so the directory itself and everything under it are ignored.
-      - Otherwise, emit the pattern as-is.
+            - Skip blank lines or those starting with '#'.
+            - If a pattern ends with '/', emit two patterns:
+                    1) pattern.rstrip('/')
+                    2) pattern.rstrip('/') + '/**'
+            so the directory itself and everything under it are ignored.
+            - Otherwise, emit the pattern as-is.
 
     Returns a PathSpec (gitwildmatch) built from all these patterns.
     """
@@ -96,9 +96,9 @@ def build_tree_pythonic(
     """
     Recursively walk `root_dir`, skipping anything matching `ignore_spec`,
     and build a nested dict that mirrors `tree -J` output:
-      { "name": "<dirname>", "type": "directory", "contents": [ ... ] }
+            { "name": "<dirname>", "type": "directory", "contents": [ ... ] }
     for directories, or
-      { "name": "<filename>", "type": "file" }
+            { "name": "<filename>", "type": "file" }
     for files.
 
     Any path (file or directory) whose relative path matches `ignore_spec` is skipped.

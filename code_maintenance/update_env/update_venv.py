@@ -5,10 +5,10 @@ update_venv.py
 Upgrade pip and all installed Python packages within the current virtual environment.
 Automatically resolves dependency conflicts up to three passes, then logs the final
 installed packages and versions to a shared “logs” folder under:
-    <project_root>/cache/code_maintenance/update_env/logs/python_log.txt
+        <project_root>/cache/code_maintenance/update_env/logs/python_log.txt
 
 Usage:
-    python3 update_venv.py
+        python3 update_venv.py
 
 Behavior:
 1. Uses the virtual environment’s Python interpreter (sys.executable).
@@ -18,8 +18,8 @@ Behavior:
 5. Attempts to resolve dependency conflicts (up to 3 passes) by parsing `pip check` output.
 6. Performs a final `pip check` to confirm no conflicts remain.
 7. Displays a summary of installed packages with `pip list --format=columns` and appends it
-   (along with all other INFO/WARNING/ERROR messages) into:
-   <project_root>/cache/code_maintenance/update_env/logs/python_log.txt
+        (along with all other INFO/WARNING/ERROR messages) into:
+        <project_root>/cache/code_maintenance/update_env/logs/python_log.txt
 
 Logging:
 - INFO logs report progress and summary.

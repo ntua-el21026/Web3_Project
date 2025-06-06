@@ -7,20 +7,19 @@ Automates Node.js project maintenance with peer-dependency reconciliation.
 • Ensures latest NVM / LTS Node / npm.
 • Optionally upgrades global npm packages.
 • For every root dependency:
-                                                                                                                                                                                                                                                                1. Gather peer-dependency ranges (`npm ls --depth=1`).
-                                                                                                                                                                                                                                                                2. Pick the newest published version that satisfies root + peers;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                if impossible, pick newest version satisfying peers only.
-                                                                                                                                                                                                                                                                3. Log a candidate line:
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                CANDIDATE → <pkg> <old> -> ^<new>  [UPGRADE|DOWNGRADE peer-deps|SAME|CONFLICT]
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                — These lines go into the shared log file (not to the console).
-                                                                                                                                                                                                                                                                4. Only UPGRADE / DOWNGRADE changes modify package.json.
+        1. Gather peer-dependency ranges (`npm ls --depth=1`).
+        2. Pick the newest published version that satisfies root + peers;
+                if impossible, pick newest version satisfying peers only.
+        3. Log a candidate line:
+                CANDIDATE → <pkg> <old> -> ^<new>  [UPGRADE|DOWNGRADE peer-deps|SAME|CONFLICT]
+                — These lines go into the shared log file (not to the console).
+        4. Only UPGRADE / DOWNGRADE changes modify package.json.
 • Writes package.json, runs `npm install`, dedupes, audits.
 
 All INFO‐level logs (including candidate lines) now merge into:
-                                                                                                                                <project_root>/cache/code_maintenance/update_env/logs/node_log.log
+<project_root>/cache/code_maintenance/update_env/logs/node_log.log
 
 Console only shows WARNING+ and the progress bar.
-
 """
 
 from __future__ import annotations
@@ -350,10 +349,24 @@ def bump_deps(root: Path, step: int) -> None:
 
     if changed:
         pkg_file.write_text(json.dumps(pkg_data, indent=2) + "\n")
-        if run(["npm", "install", "--legacy-peer-deps"], cwd=root)[0]:
-            if run(["npm", "install", "--force"], cwd=root)[0]:
-                logger.error("npm install failed")
+
+        # Attempt install with --legacy-peer-deps and capture output
+        rc1, out1, err1 = run(
+            ["npm", "install", "--legacy-peer-deps"], cwd=root, capture=True
+        )
+        if rc1 != 0:
+            logger.error("npm install --legacy-peer-deps failed:")
+            logger.error(out1)
+            logger.error(err1)
+
+            # Fallback to --force, also capturing output
+            rc2, out2, err2 = run(["npm", "install", "--force"], cwd=root, capture=True)
+            if rc2 != 0:
+                logger.error("npm install --force failed:")
+                logger.error(out2)
+                logger.error(err2)
                 sys.exit(1)
+
         run(["npm", "dedupe"], cwd=root)
         logger.info(f"Dependency upgrade complete ({changed} packages)")
     else:

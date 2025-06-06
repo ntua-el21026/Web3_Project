@@ -5,7 +5,7 @@ update_global.py
 Installs, upgrades, and verifies curated global npm packages.
 Includes enhanced checks, reporting, and error handling.
 Logs everything to both stdout and the shared log at:
-    <project_root>/cache/code_maintenance/update_env/logs/global_log.log
+        <project_root>/cache/code_maintenance/update_env/logs/global_log.log
 
 Assumes Node.js and npm are already installed (or accessible).
 """

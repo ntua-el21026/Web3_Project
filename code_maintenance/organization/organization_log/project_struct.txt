@@ -8,9 +8,7 @@ Web3_Project/
 │   │   └── run_all.py
 │   ├── organization/
 │   │   ├── organization_log/
-│   │   │   ├── project_analytics.txt
-│   │   │   ├── project_struct.json
-│   │   │   └── project_struct.txt
+│   │   │   └── project_analytics.txt
 │   │   ├── project_analytics.py
 │   │   └── project_structure.py
 │   ├── update_env/
@@ -19,9 +17,12 @@ Web3_Project/
 │   │   ├── update_node.py
 │   │   └── update_venv.py
 │   └── maintain.py
+├── docs/
+│   ├── Web3 Project - v1.0.pdf
+│   └── Web3 Project - v1.0.tex
 ├── .gitignore
 ├── LICENSE
 ├── package.json
 └── README.md
 
-Total directories: 6, Total files: 19
+Total directories: 7, Total files: 19

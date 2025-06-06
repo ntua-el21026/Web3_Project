@@ -4,8 +4,8 @@ project_analytics.py
 
 Locate the project root by finding package-lock.json, then:
 1. Run two analyses:
-       a) Count total folders, files, and lines across all files (ignoring no paths).
-       b) Count total folders, files, and lines excluding .gitignored paths (plus .git).
+                a) Count total folders, files, and lines across all files (ignoring no paths).
+                b) Count total folders, files, and lines excluding .gitignored paths (plus .git).
 2. For each run, break down file counts and line counts by programming language (based on file extension).
 3. Display a progress bar as it processes each filesystem entry.
 
@@ -14,7 +14,7 @@ Writes a single report (containing both “no-ignore” and “with-ignore” se
 
 Logging:
 - INFO: progress and summary (both to console and to
-  <project_root>/cache/code_maintenance/organization/logs/project_analytics.log)
+        <project_root>/cache/code_maintenance/organization/logs/project_analytics.log)
 - ERROR: fatal errors and exit
 """
 
@@ -107,11 +107,11 @@ def load_ignore_patterns(root: Path) -> PathSpec:
     """
     Read .gitignore under `root`, including commented lines.
     For each non-blank line:
-      - If it begins with '#', strip that '#' and any following spaces → pattern.
-      - Otherwise, strip inline comments after an unescaped '#'.
+            - If it begins with '#', strip that '#' and any following spaces → pattern.
+            - Otherwise, strip inline comments after an unescaped '#'.
     If a pattern ends with '/', we:
-      (1) strip the trailing slash and add that as a pattern (to ignore the directory itself)
-      (2) add pattern+'/**' so that everything under that directory is also ignored.
+            (1) strip the trailing slash and add that as a pattern (to ignore the directory itself)
+            (2) add pattern+'/**' so that everything under that directory is also ignored.
 
     We also always add ".git" and ".git/**", so the .git folder is never counted.
     """
@@ -193,10 +193,10 @@ def analyze_tree(
     """
     Recursively walk `root`, pruning ignored subtrees at the highest level,
     to count:
-      - total_dirs: number of directories (including the root itself)
-      - total_files: number of files
-      - total_lines: sum of all lines across files
-      - lang_stats: mapping language -> (file_count, line_count)
+            - total_dirs: number of directories (including the root itself)
+            - total_files: number of files
+            - total_lines: sum of all lines across files
+            - lang_stats: mapping language -> (file_count, line_count)
     Uses collect_non_ignored() to build the list of entries to process.
     Displays a simple progress bar over the number of non-ignored entries.
     """

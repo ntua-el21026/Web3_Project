@@ -9,7 +9,7 @@ file ends with exactly one newline (no more, no fewer). Files larger than 5 MB
 are skipped.
 
 Usage:
-                                                                ./fix_eof.py [--root /path/to/project] [--dry-run] [--verbose]
+        ./fix_eof.py [--root /path/to/project] [--dry-run] [--verbose]
 
 By default, we look for package-lock.json upward from this script’s folder to find
 the project root. You can override via --root. A small ENV var cache (PROJECT_ROOT_CACHE)
@@ -111,6 +111,7 @@ LOG_DIR = PROJECT_ROOT / "cache" / "code_maintenance" / "code_utils" / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_PATH = LOG_DIR / "fix_eof.log"
 
+# Create logger
 logger = logging.getLogger("fix_eof")
 logger.setLevel(logging.INFO)
 
@@ -120,22 +121,22 @@ ch.setLevel(logging.INFO)
 ch.setFormatter(logging.Formatter("%(message)s"))
 logger.addHandler(ch)
 
-# File handler (timestamps) writing into shared logs folder
-fh = logging.FileHandler(LOG_PATH, mode="a", encoding="utf-8")
+# File handler (mode="w" truncates any existing file)
+fh = logging.FileHandler(LOG_PATH, mode="w", encoding="utf-8")
 fh.setLevel(logging.INFO)
 fh.setFormatter(
     logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S")
 )
 logger.addHandler(fh)
-
-
 # ───────────────────────────────────────────────────────────────────────────────
+
+
 def load_combined_ignore_spec(root: Path) -> PathSpec:
     """
     Read all ignore files (IGNORE_FILES) under 'root', accumulate patterns:
-                                                                    - If a line’s first non-whitespace character is '#', treat everything after
-                                                                    that '#' as a literal ignore pattern.
-                                                                    - Otherwise, strip inline comments (anything after an unescaped '#') and skip blank lines.
+            - If a line’s first non-whitespace character is '#', treat everything after
+            that '#' as a literal ignore pattern.
+            - Otherwise, strip inline comments (anything after an unescaped '#') and skip blank lines.
     For any pattern ending in '/', also add 'pattern/**' so that all children are ignored.
     Finally, ALWAYS ignore '.git' and '.git/**'.
     """
@@ -231,9 +232,9 @@ def ensure_single_final_newline(file_path: Path) -> bool:
 def parse_args() -> argparse.Namespace:
     """
     Parse command-line arguments:
-                                                                    --root PATH    : override project root (skip package-lock.json search)
-                                                                    --dry-run      : only show which files would be modified
-                                                                    --verbose      : enable DEBUG logging (very verbose)
+            --root PATH    : override project root (skip package-lock.json search)
+            --dry-run      : only show which files would be modified
+            --verbose      : enable DEBUG logging (very verbose)
     """
     p = argparse.ArgumentParser(
         description="Ensure each code file ends with exactly one newline (no extras)."
@@ -266,8 +267,12 @@ def main():
     # Adjust logger level if verbose requested
     if args.verbose:
         logger.setLevel(logging.DEBUG)
+        ch.setLevel(logging.DEBUG)
+        fh.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
+        ch.setLevel(logging.INFO)
+        fh.setLevel(logging.INFO)
 
     # Determine project root (again, in case --root was used)
     script_dir = Path(__file__).resolve().parent
@@ -326,8 +331,7 @@ def main():
                 filled = int(bar_length * percent)
                 bar = "#" * filled + " " * (bar_length - filled)
                 print(
-                    f"\rScanning entries: [{bar}] {
-                        percent * 100:5.1f}%",
+                    f"\rScanning entries: [{bar}] {percent * 100:5.1f}%",
                     end="",
                     flush=True,
                 )

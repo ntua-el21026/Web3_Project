@@ -43,14 +43,6 @@
                 {
                   "name": "project_analytics.txt",
                   "type": "file"
-                },
-                {
-                  "name": "project_struct.json",
-                  "type": "file"
-                },
-                {
-                  "name": "project_struct.txt",
-                  "type": "file"
                 }
               ]
             },
@@ -88,6 +80,20 @@
         },
         {
           "name": "maintain.py",
+          "type": "file"
+        }
+      ]
+    },
+    {
+      "name": "docs",
+      "type": "directory",
+      "contents": [
+        {
+          "name": "Web3 Project - v1.0.pdf",
+          "type": "file"
+        },
+        {
+          "name": "Web3 Project - v1.0.tex",
           "type": "file"
         }
       ]

@@ -13,7 +13,7 @@ from the project root (the directory containing .gitignore). The script consults
 to remember where each target script was last found.
 
 Logs all output only to the terminal. The cache is now located in:
-    <project_root>/cache/code_maintenance/maintain_cache.json
+        <project_root>/cache/code_maintenance/maintain_cache.json
 
 Additionally, after run_all.py produces `fix_eof.log` in the cache, this script
 renames it to `fix_eof_1.log`. Then after running fix_eof.py again at the end,
@@ -112,7 +112,7 @@ def find_project_root(start: Path) -> Path:
 def get_cache_paths() -> tuple[Path, Path]:
     """
     Determine CACHE_DIR and CACHE_PATH under:
-        <project_root>/cache/code_maintenance/maintain_cache.json
+            <project_root>/cache/code_maintenance/maintain_cache.json
     """
     project_root = find_project_root(SCRIPT_DIR)
     cache_dir = project_root / "cache" / "code_maintenance"
@@ -156,11 +156,11 @@ def load_ignore_spec(root: Path) -> PathSpec:
     """
     Read .gitignore under `root`, including commented lines.
     For each non-blank line:
-      - If it begins with '#', strip that '#' and any following spaces → pattern.
-      - Otherwise, strip inline comments after an unescaped '#'.
+            - If it begins with '#', strip that '#' and any following spaces → pattern.
+            - Otherwise, strip inline comments after an unescaped '#'.
     If a pattern ends with '/', we:
-      (1) strip the trailing slash and add that as a pattern (to ignore the directory itself)
-      (2) add pattern+'/**' so that everything under that directory is also ignored.
+            (1) strip the trailing slash and add that as a pattern (to ignore the directory itself)
+            (2) add pattern+'/**' so that everything under that directory is also ignored.
 
     We also always add ".git" and ".git/**", so the .git folder is never counted.
     """
